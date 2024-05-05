@@ -13,12 +13,17 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.exoplayer.ExoPlayer
 import top.yogiczy.mytv.ui.rememberChildPadding
 import top.yogiczy.mytv.ui.screens.video.components.VideoDetailInfo
+import android.util.Log
+
+import tv.danmaku.ijk.media.player.IMediaPlayer;
+import tv.danmaku.ijk.media.player.IjkMediaPlayer;
+import top.yogiczy.mytv.ui.utils.IjkUtil
 
 @Composable
 fun VideoScreen(
     modifier: Modifier = Modifier,
-    exoPlayer: ExoPlayer,
-    state: PlayerState = rememberPlayerState(exoPlayer),
+    ijkPlayer: IjkMediaPlayer,
+    state: PlayerState = rememberPlayerState(ijkPlayer),
     showPlayerInfo: Boolean = false,
 ) {
     val context = LocalContext.current
@@ -34,7 +39,7 @@ fun VideoScreen(
                 SurfaceView(context)
             },
             update = { surfaceView ->
-                exoPlayer.setVideoSurfaceView(surfaceView)
+                ijkPlayer.setDisplay(surfaceView.holder)
             },
         )
 

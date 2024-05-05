@@ -18,6 +18,10 @@ import androidx.media3.exoplayer.DecoderReuseEvaluation
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.analytics.AnalyticsListener
 
+import tv.danmaku.ijk.media.player.IMediaPlayer;
+import tv.danmaku.ijk.media.player.IjkMediaPlayer;
+import top.yogiczy.mytv.ui.utils.IjkUtil
+
 /**
  * 播放器状态
  */
@@ -65,7 +69,7 @@ class PlayerState {
 @OptIn(UnstableApi::class)
 @Composable
 fun rememberPlayerState(
-    exoPlayer: ExoPlayer = ExoPlayer.Builder(LocalContext.current).build(),
+    ijkPlayer: IjkMediaPlayer = IjkUtil.getInstance(),
 ): PlayerState {
     val state = remember { PlayerState() }
 
@@ -81,11 +85,11 @@ fun rememberPlayerState(
         override fun onPlayerError(error: PlaybackException) {
             state.error = true
 
-            // 如果是直播加载位置错误，尝试重新播放
-            if (error.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) {
-                exoPlayer.seekToDefaultPosition()
-                exoPlayer.prepare()
-            }
+            // // 如果是直播加载位置错误，尝试重新播放
+            // if (error.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) {
+            //     exoPlayer.seekToDefaultPosition()
+            //     exoPlayer.prepare()
+            // }
         }
 
         override fun onPlaybackStateChanged(playbackState: Int) {
@@ -144,12 +148,12 @@ fun rememberPlayerState(
     }
 
     DisposableEffect(Unit) {
-        exoPlayer.addListener(listener)
-        exoPlayer.addAnalyticsListener(metadataListener)
+        // ijkPlayer.addListener(listener)
+        // ijkPlayer.addAnalyticsListener(metadataListener)
 
         onDispose {
-            exoPlayer.removeListener(listener)
-            exoPlayer.removeAnalyticsListener(metadataListener)
+            // ijkPlayer.removeListener(listener)
+            // ijkPlayer.removeAnalyticsListener(metadataListener)
         }
     }
 

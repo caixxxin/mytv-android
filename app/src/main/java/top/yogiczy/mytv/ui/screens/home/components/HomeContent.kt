@@ -39,10 +39,6 @@ import androidx.media3.common.util.Util
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.hls.HlsMediaSource
-import androidx.media3.exoplayer.source.MediaSource
-import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -76,6 +72,10 @@ import top.yogiczy.mytv.ui.utils.handleDPadKeyEvents
 import top.yogiczy.mytv.ui.utils.handleDragGestures
 import kotlin.math.max
 
+import tv.danmaku.ijk.media.player.IMediaPlayer;
+import tv.danmaku.ijk.media.player.IjkMediaPlayer;
+import top.yogiczy.mytv.ui.utils.IjkUtil
+
 @OptIn(UnstableApi::class)
 @Composable
 fun HomeContent(
@@ -89,7 +89,7 @@ fun HomeContent(
         iptvGroupList = iptvGroupList,
         settingsState = settingsState,
     ),
-    playerState: PlayerState = rememberPlayerState(homeState.exoPlayer),
+    playerState: PlayerState = rememberPlayerState(homeState.ijkPlayer),
     digitChannelSelectState: DigitChannelSelectState = rememberDigitChannelSelectState { channelNo ->
         if (channelNo.toInt() - 1 in 0..<iptvGroupList.flatMap { it.iptvs }.size) {
             homeState.changeCurrentIptv(iptvGroupList.flatMap { it.iptvs }[channelNo.toInt() - 1])
@@ -120,9 +120,9 @@ fun HomeContent(
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                homeState.exoPlayer.play()
+                homeState.ijkPlayer.start()
             } else if (event == Lifecycle.Event.ON_STOP) {
-                homeState.exoPlayer.pause()
+                homeState.ijkPlayer.pause()
             }
         }
 
@@ -202,7 +202,7 @@ fun HomeContent(
                 .focusable(),
         ) {
             VideoScreen(
-                exoPlayer = homeState.exoPlayer,
+                ijkPlayer = homeState.ijkPlayer,
                 state = playerState,
                 showPlayerInfo = settingsState.debugShowPlayerInfo,
             )
@@ -320,10 +320,8 @@ class HomeContentState(
     private var _isTempPanelVisible by mutableStateOf(false)
     val isTempPanelVisible get() = _isTempPanelVisible
 
-    private var _exoPlayer = ExoPlayer.Builder(context).build().apply {
-        playWhenReady = true
-    }
-    val exoPlayer get() = _exoPlayer
+    private var _ijkPlayer = IjkUtil.getInstance()
+    val ijkPlayer get() = _ijkPlayer
 
     private val dataSourceFactory: DataSource.Factory =
         DefaultDataSource.Factory(context, DefaultHttpDataSource.Factory().apply {
@@ -341,52 +339,79 @@ class HomeContentState(
             changeCurrentIptv(iptvGroupList.firstOrNull()?.iptvs?.firstOrNull() ?: Iptv.EMPTY)
         }
 
-        _exoPlayer.addListener(object : Player.Listener {
-            override fun onPlaybackStateChanged(playbackState: Int) {
-                if (playbackState == Player.STATE_READY) {
-                    coroutineScope.launch {
-                        val name = currentIptv.name
-                        delay(1000)
-                        if (name == currentIptv.name) {
-                            _isTempPanelVisible = false
-                        }
+        _ijkPlayer.setOnInfoListener{ mp, what, extra ->
+            if (what == IMediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START) {
+                coroutineScope.launch {
+                    val name = currentIptv.name
+                    delay(1000)
+                    if (name == currentIptv.name) {
+                        _isTempPanelVisible = false
                     }
-
-                    // 记忆可播放的域名
-                    settingsState.iptvPlayableHostList += Uri.parse(_currentIptv.urlList[_currentIptvUrlIdx]).host
-                        ?: ""
-                }
-            }
-
-            override fun onPlayerError(error: PlaybackException) {
-                if (_currentIptvUrlIdx < _currentIptv.urlList.size - 1) {
-                    changeCurrentIptv(_currentIptv, _currentIptvUrlIdx + 1)
                 }
 
-                // 从记忆中删除不可播放的域名
-                settingsState.iptvPlayableHostList -= Uri.parse(_currentIptv.urlList[_currentIptvUrlIdx]).host
+                // 记忆可播放的域名
+                settingsState.iptvPlayableHostList += Uri.parse(_currentIptv.urlList[_currentIptvUrlIdx]).host
                     ?: ""
-
-                // 当解析容器不支持时，尝试使用 HLS 解析
-                if (error.errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED) {
-                    val uri = _exoPlayer.currentMediaItem?.localConfiguration?.uri
-                    if (uri != null) {
-                        log.w("尝试使用 HLS 解析：$uri")
-                        val contentType = Util.inferContentType(uri)
-                        if (contentType == C.CONTENT_TYPE_OTHER) {
-                            exoPlayer.setMediaSource(
-                                getExoPlayerMediaSource(
-                                    uri,
-                                    dataSourceFactory,
-                                    C.CONTENT_TYPE_HLS,
-                                )
-                            )
-                            exoPlayer.prepare()
-                        }
-                    }
-                }
             }
-        })
+            false
+        }
+        _ijkPlayer.setOnErrorListener{ mp, what, extra ->
+            if (_currentIptvUrlIdx < _currentIptv.urlList.size - 1) {
+                changeCurrentIptv(_currentIptv, _currentIptvUrlIdx + 1)
+            }
+
+            // 从记忆中删除不可播放的域名
+            settingsState.iptvPlayableHostList -= Uri.parse(_currentIptv.urlList[_currentIptvUrlIdx]).host
+                ?: ""
+
+            false
+        }
+        // _exoPlayer.addListener(object : Player.Listener {
+        //     override fun onPlaybackStateChanged(playbackState: Int) {
+        //         if (playbackState == Player.STATE_READY) {
+        //             coroutineScope.launch {
+        //                 val name = currentIptv.name
+        //                 delay(1000)
+        //                 if (name == currentIptv.name) {
+        //                     _isTempPanelVisible = false
+        //                 }
+        //             }
+
+        //             // 记忆可播放的域名
+        //             settingsState.iptvPlayableHostList += Uri.parse(_currentIptv.urlList[_currentIptvUrlIdx]).host
+        //                 ?: ""
+        //         }
+        //     }
+
+        //     override fun onPlayerError(error: PlaybackException) {
+        //         if (_currentIptvUrlIdx < _currentIptv.urlList.size - 1) {
+        //             changeCurrentIptv(_currentIptv, _currentIptvUrlIdx + 1)
+        //         }
+
+        //         // 从记忆中删除不可播放的域名
+        //         settingsState.iptvPlayableHostList -= Uri.parse(_currentIptv.urlList[_currentIptvUrlIdx]).host
+        //             ?: ""
+
+        //         // 当解析容器不支持时，尝试使用 HLS 解析
+        //         if (error.errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED) {
+        //             val uri = _exoPlayer.currentMediaItem?.localConfiguration?.uri
+        //             if (uri != null) {
+        //                 log.w("尝试使用 HLS 解析：$uri")
+        //                 val contentType = Util.inferContentType(uri)
+        //                 if (contentType == C.CONTENT_TYPE_OTHER) {
+        //                     exoPlayer.setMediaSource(
+        //                         getExoPlayerMediaSource(
+        //                             uri,
+        //                             dataSourceFactory,
+        //                             C.CONTENT_TYPE_HLS,
+        //                         )
+        //                     )
+        //                     exoPlayer.prepare()
+        //                 }
+        //             }
+        //         }
+        //     }
+        // })
     }
 
     fun changePanelVisible(visible: Boolean) {
@@ -440,8 +465,12 @@ class HomeContentState(
         val url = iptv.urlList[_currentIptvUrlIdx]
         log.d("播放（${_currentIptvUrlIdx + 1}/${_currentIptv.urlList.size}）: $url")
 
-        exoPlayer.setMediaSource(getExoPlayerMediaSource(Uri.parse(url), dataSourceFactory))
-        exoPlayer.prepare()
+        ijkPlayer.reset()
+        ijkPlayer.setDataSource(url)
+        ijkPlayer.setOnPreparedListener{
+            it.start()
+        }
+        ijkPlayer.prepareAsync()
     }
 
     fun changeCurrentIptvToPrev() {
@@ -471,27 +500,4 @@ fun rememberHomeContentState(
     }
 
     return state
-}
-
-@OptIn(UnstableApi::class)
-fun getExoPlayerMediaSource(
-    uri: Uri,
-    dataSourceFactory: DataSource.Factory,
-    contentType: Int? = null,
-): MediaSource {
-    val mediaItem = MediaItem.fromUri(uri)
-
-    return when (val type = contentType ?: Util.inferContentType(uri)) {
-        C.CONTENT_TYPE_HLS -> {
-            HlsMediaSource.Factory(dataSourceFactory).createMediaSource(mediaItem)
-        }
-
-        C.CONTENT_TYPE_OTHER -> {
-            ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(mediaItem)
-        }
-
-        else -> {
-            throw IllegalStateException("Unsupported type: $type")
-        }
-    }
 }
