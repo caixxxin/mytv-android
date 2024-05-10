@@ -59,7 +59,7 @@ object Constants {
     /**
      * 播放器http userAgent
      */
-    const val VIDEO_PLAYER_HTTP_USER_AGENT = "ExoPlayer"
+    const val VIDEO_PLAYER_HTTP_USER_AGENT = "IjkPlayer"
 
     /**
      * 界面 超时未操作自动关闭选台界面

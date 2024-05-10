@@ -18,6 +18,9 @@ import androidx.media3.exoplayer.DecoderReuseEvaluation
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.analytics.AnalyticsListener
 
+import tv.danmaku.ijk.media.player.IMediaPlayer;
+import top.yogiczy.mytv.ui.utils.IjkUtil
+
 /**
  * 播放器状态
  */
@@ -65,91 +68,98 @@ class PlayerState {
 @OptIn(UnstableApi::class)
 @Composable
 fun rememberPlayerState(
-    exoPlayer: ExoPlayer = ExoPlayer.Builder(LocalContext.current).build(),
+    ijkUtilInst: IjkUtil = IjkUtil.getInstance(),
 ): PlayerState {
     val state = remember { PlayerState() }
 
-    val listener = object : Player.Listener {
-        override fun onVideoSizeChanged(videoSize: VideoSize) {
-            state.resolution = Pair(videoSize.width, videoSize.height)
 
-            if (videoSize.width != 0 && videoSize.height != 0) {
-                state.aspectRatio = videoSize.width.toFloat() / videoSize.height
+
+    fun addIjkUtilListener() {
+        ijkUtilInst.setOnVideoSizeChangedListener("PlayerState") { width, height, sar_num, sar_den ->
+            state.resolution = Pair(width, height)
+
+            if (width != 0 && height != 0) {
+                state.aspectRatio = width.toFloat() / height
             }
         }
 
-        override fun onPlayerError(error: PlaybackException) {
+        ijkUtilInst.setOnErrorListener("PlayerState") { what, extra ->
             state.error = true
 
-            // 如果是直播加载位置错误，尝试重新播放
-            if (error.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) {
-                exoPlayer.seekToDefaultPosition()
-                exoPlayer.prepare()
-            }
+            // // 如果是直播加载位置错误，尝试重新播放
+            // if (error.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) {
+            //     exoPlayer.seekToDefaultPosition()
+            //     exoPlayer.prepare()
+            // }
+            true
         }
 
-        override fun onPlaybackStateChanged(playbackState: Int) {
-            if (playbackState == Player.STATE_BUFFERING) {
+        ijkUtilInst.setOnInfoListener("PlayerState") { what, extra ->
+            if (what == IMediaPlayer.MEDIA_INFO_BUFFERING_START) {
                 state.error = false
             }
+            true
         }
     }
 
-    val metadataListener = object : AnalyticsListener {
-        override fun onVideoInputFormatChanged(
-            eventTime: AnalyticsListener.EventTime,
-            format: Format,
-            decoderReuseEvaluation: DecoderReuseEvaluation?,
-        ) {
-            state.metadata = state.metadata.copy(
-                videoMimeType = format.sampleMimeType ?: "",
-                videoWidth = format.width,
-                videoHeight = format.height,
-                videoColor = format.colorInfo?.toLogString() ?: "",
-                // TODO 帧率、比特率目前是从tag中获取，有的返回空，后续需要实时计算
-                videoFrameRate = format.frameRate,
-                videoBitrate = format.bitrate,
-            )
-        }
-
-        override fun onVideoDecoderInitialized(
-            eventTime: AnalyticsListener.EventTime,
-            decoderName: String,
-            initializedTimestampMs: Long,
-            initializationDurationMs: Long,
-        ) {
-            state.metadata = state.metadata.copy(videoDecoder = decoderName)
-        }
-
-        override fun onAudioInputFormatChanged(
-            eventTime: AnalyticsListener.EventTime,
-            format: Format,
-            decoderReuseEvaluation: DecoderReuseEvaluation?,
-        ) {
-            state.metadata = state.metadata.copy(
-                audioMimeType = format.sampleMimeType ?: "",
-                audioChannels = format.channelCount,
-                audioSampleRate = format.sampleRate,
-            )
-        }
-
-        override fun onAudioDecoderInitialized(
-            eventTime: AnalyticsListener.EventTime,
-            decoderName: String,
-            initializedTimestampMs: Long,
-            initializationDurationMs: Long,
-        ) {
-            state.metadata = state.metadata.copy(audioDecoder = decoderName)
-        }
+    fun removeIjkUtilListener() {
+        ijkUtilInst.removeOnVideoSizeChangedListener("PlayerState")
+        ijkUtilInst.removeOnErrorListener("PlayerState")
     }
+
+    // val metadataListener = object : AnalyticsListener {
+    //     override fun onVideoInputFormatChanged(
+    //         eventTime: AnalyticsListener.EventTime,
+    //         format: Format,
+    //         decoderReuseEvaluation: DecoderReuseEvaluation?,
+    //     ) {
+    //         state.metadata = state.metadata.copy(
+    //             videoMimeType = format.sampleMimeType ?: "",
+    //             videoWidth = format.width,
+    //             videoHeight = format.height,
+    //             videoColor = format.colorInfo?.toLogString() ?: "",
+    //             // TODO 帧率、比特率目前是从tag中获取，有的返回空，后续需要实时计算
+    //             videoFrameRate = format.frameRate,
+    //             videoBitrate = format.bitrate,
+    //         )
+    //     }
+
+    //     override fun onVideoDecoderInitialized(
+    //         eventTime: AnalyticsListener.EventTime,
+    //         decoderName: String,
+    //         initializedTimestampMs: Long,
+    //         initializationDurationMs: Long,
+    //     ) {
+    //         state.metadata = state.metadata.copy(videoDecoder = decoderName)
+    //     }
+
+    //     override fun onAudioInputFormatChanged(
+    //         eventTime: AnalyticsListener.EventTime,
+    //         format: Format,
+    //         decoderReuseEvaluation: DecoderReuseEvaluation?,
+    //     ) {
+    //         state.metadata = state.metadata.copy(
+    //             audioMimeType = format.sampleMimeType ?: "",
+    //             audioChannels = format.channelCount,
+    //             audioSampleRate = format.sampleRate,
+    //         )
+    //     }
+
+    //     override fun onAudioDecoderInitialized(
+    //         eventTime: AnalyticsListener.EventTime,
+    //         decoderName: String,
+    //         initializedTimestampMs: Long,
+    //         initializationDurationMs: Long,
+    //     ) {
+    //         state.metadata = state.metadata.copy(audioDecoder = decoderName)
+    //     }
+    // }
 
     DisposableEffect(Unit) {
-        exoPlayer.addListener(listener)
-        exoPlayer.addAnalyticsListener(metadataListener)
+        addIjkUtilListener()
 
         onDispose {
-            exoPlayer.removeListener(listener)
-            exoPlayer.removeAnalyticsListener(metadataListener)
+            removeIjkUtilListener()
         }
     }
 

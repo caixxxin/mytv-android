@@ -31,8 +31,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = false
+            isShrinkResources = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
             )
@@ -64,24 +64,24 @@ android {
         }
     }
 
-    signingConfigs {
-        create("release") {
-            // 配置密钥库文件的位置、别名、密码等信息
-            storeFile =
-                file(System.getenv("KEYSTORE") ?: keystoreProperties["storeFile"] ?: "keystore.jks")
-            storePassword = System.getenv("KEYSTORE_PASSWORD")
-                ?: keystoreProperties.getProperty("storePassword")
-            keyAlias = System.getenv("KEY_ALIAS") ?: keystoreProperties.getProperty("keyAlias")
-            keyPassword =
-                System.getenv("KEY_PASSWORD") ?: keystoreProperties.getProperty("keyPassword")
-        }
-    }
+    // signingConfigs {
+    //     create("release") {
+    //         // 配置密钥库文件的位置、别名、密码等信息
+    //         storeFile =
+    //             file(System.getenv("KEYSTORE") ?: keystoreProperties["storeFile"] ?: "keystore.jks")
+    //         storePassword = System.getenv("KEYSTORE_PASSWORD")
+    //             ?: keystoreProperties.getProperty("storePassword")
+    //         keyAlias = System.getenv("KEY_ALIAS") ?: keystoreProperties.getProperty("keyAlias")
+    //         keyPassword =
+    //             System.getenv("KEY_PASSWORD") ?: keystoreProperties.getProperty("keyPassword")
+    //     }
+    // }
 
-    buildTypes {
-        getByName("release") {
-            signingConfig = signingConfigs.getByName("release")
-        }
-    }
+    // buildTypes {
+    //     getByName("release") {
+    //         signingConfig = signingConfigs.getByName("release")
+    //     }
+    // }
 }
 
 dependencies {
@@ -124,4 +124,6 @@ dependencies {
 
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.aar"))))
 }
