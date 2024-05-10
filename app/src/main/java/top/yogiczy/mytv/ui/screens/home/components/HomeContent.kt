@@ -73,7 +73,6 @@ import top.yogiczy.mytv.ui.utils.handleDragGestures
 import kotlin.math.max
 
 import tv.danmaku.ijk.media.player.IMediaPlayer;
-import tv.danmaku.ijk.media.player.IjkMediaPlayer;
 import top.yogiczy.mytv.ui.utils.IjkUtil
 
 @OptIn(UnstableApi::class)
@@ -89,7 +88,7 @@ fun HomeContent(
         iptvGroupList = iptvGroupList,
         settingsState = settingsState,
     ),
-    playerState: PlayerState = rememberPlayerState(homeState.ijkPlayer),
+    playerState: PlayerState = rememberPlayerState(homeState.ijkUtilInst),
     digitChannelSelectState: DigitChannelSelectState = rememberDigitChannelSelectState { channelNo ->
         if (channelNo.toInt() - 1 in 0..<iptvGroupList.flatMap { it.iptvs }.size) {
             homeState.changeCurrentIptv(iptvGroupList.flatMap { it.iptvs }[channelNo.toInt() - 1])
@@ -120,9 +119,9 @@ fun HomeContent(
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                homeState.ijkPlayer.start()
+                homeState.ijkUtilInst.start()
             } else if (event == Lifecycle.Event.ON_STOP) {
-                homeState.ijkPlayer.pause()
+                homeState.ijkUtilInst.pause()
             }
         }
 
@@ -202,7 +201,7 @@ fun HomeContent(
                 .focusable(),
         ) {
             VideoScreen(
-                ijkPlayer = homeState.ijkPlayer,
+                ijkUtilInst = homeState.ijkUtilInst,
                 state = playerState,
                 showPlayerInfo = settingsState.debugShowPlayerInfo,
             )
@@ -320,8 +319,8 @@ class HomeContentState(
     private var _isTempPanelVisible by mutableStateOf(false)
     val isTempPanelVisible get() = _isTempPanelVisible
 
-    private var _ijkPlayer = IjkUtil.getInstance()
-    val ijkPlayer get() = _ijkPlayer
+    private var _ijkUtilInst = IjkUtil.getInstance()
+    val ijkUtilInst get() = _ijkUtilInst
 
     private val dataSourceFactory: DataSource.Factory =
         DefaultDataSource.Factory(context, DefaultHttpDataSource.Factory().apply {
@@ -339,7 +338,7 @@ class HomeContentState(
             changeCurrentIptv(iptvGroupList.firstOrNull()?.iptvs?.firstOrNull() ?: Iptv.EMPTY)
         }
 
-        _ijkPlayer.setOnInfoListener{ mp, what, extra ->
+        _ijkUtilInst.setOnInfoListener("HomeContent") { what, extra ->
             if (what == IMediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START) {
                 coroutineScope.launch {
                     val name = currentIptv.name
@@ -355,7 +354,7 @@ class HomeContentState(
             }
             false
         }
-        _ijkPlayer.setOnErrorListener{ mp, what, extra ->
+        _ijkUtilInst.setOnErrorListener("HomeContent") { what, extra ->
             if (_currentIptvUrlIdx < _currentIptv.urlList.size - 1) {
                 changeCurrentIptv(_currentIptv, _currentIptvUrlIdx + 1)
             }
@@ -465,12 +464,9 @@ class HomeContentState(
         val url = iptv.urlList[_currentIptvUrlIdx]
         log.d("播放（${_currentIptvUrlIdx + 1}/${_currentIptv.urlList.size}）: $url")
 
-        ijkPlayer.reset()
-        ijkPlayer.setDataSource(url)
-        ijkPlayer.setOnPreparedListener{
-            it.start()
-        }
-        ijkPlayer.prepareAsync()
+        ijkUtilInst.reset()
+        ijkUtilInst.setDataSource(url)
+        ijkUtilInst.prepareAsync()
     }
 
     fun changeCurrentIptvToPrev() {

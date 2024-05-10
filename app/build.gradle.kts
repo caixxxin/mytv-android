@@ -125,7 +125,5 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
-    implementation("tv.danmaku.ijk.media:ijkplayer-java:0.8.8")
-    implementation("tv.danmaku.ijk.media:ijkplayer-armv7a:0.8.8")
-    implementation("tv.danmaku.ijk.media:ijkplayer-arm64:0.8.8")
+    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.aar"))))
 }

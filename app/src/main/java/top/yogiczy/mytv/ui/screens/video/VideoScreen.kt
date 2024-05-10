@@ -15,15 +15,13 @@ import top.yogiczy.mytv.ui.rememberChildPadding
 import top.yogiczy.mytv.ui.screens.video.components.VideoDetailInfo
 import android.util.Log
 
-import tv.danmaku.ijk.media.player.IMediaPlayer;
-import tv.danmaku.ijk.media.player.IjkMediaPlayer;
 import top.yogiczy.mytv.ui.utils.IjkUtil
 
 @Composable
 fun VideoScreen(
     modifier: Modifier = Modifier,
-    ijkPlayer: IjkMediaPlayer,
-    state: PlayerState = rememberPlayerState(ijkPlayer),
+    ijkUtilInst: IjkUtil,
+    state: PlayerState = rememberPlayerState(ijkUtilInst),
     showPlayerInfo: Boolean = false,
 ) {
     val context = LocalContext.current
@@ -39,7 +37,7 @@ fun VideoScreen(
                 SurfaceView(context)
             },
             update = { surfaceView ->
-                ijkPlayer.setDisplay(surfaceView.holder)
+                ijkUtilInst.setDisplay(surfaceView.holder)
             },
         )
 
