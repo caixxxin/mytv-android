@@ -60,7 +60,7 @@ import top.yogiczy.mytv.ui.screens.panel.PanelTimeScreen
 import top.yogiczy.mytv.ui.screens.panel.rememberDigitChannelSelectState
 import top.yogiczy.mytv.ui.screens.settings.SettingsScreen
 import top.yogiczy.mytv.ui.screens.settings.SettingsState
-import top.yogiczy.mytv.ui.screens.settings.components.SettingsUpdaterDialog
+// import top.yogiczy.mytv.ui.screens.settings.components.SettingsUpdaterDialog
 import top.yogiczy.mytv.ui.screens.settings.components.UpdateState
 import top.yogiczy.mytv.ui.screens.settings.components.rememberUpdateState
 import top.yogiczy.mytv.ui.screens.settings.rememberSettingsState
@@ -99,8 +99,8 @@ fun HomeContent(
     val focusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
-        delay(3000)
-        updateState.checkUpdate()
+        // delay(3000)
+        // updateState.checkUpdate()
     }
 
     LaunchedEffect(homeState.isPanelVisible, homeState.isSettingsVisible) {
@@ -255,18 +255,18 @@ fun HomeContent(
         }
     }
 
-    val coroutineScope = rememberCoroutineScope()
-    SettingsUpdaterDialog(
-        showDialog = updateState.showDialog,
-        onDismissRequest = { updateState.showDialog = false },
-        release = updateState.latestRelease,
-        onUpdateAndInstall = {
-            updateState.showDialog = false
-            coroutineScope.launch(Dispatchers.IO) {
-                updateState.downloadAndUpdate()
-            }
-        },
-    )
+    // val coroutineScope = rememberCoroutineScope()
+    // SettingsUpdaterDialog(
+    //     showDialog = updateState.showDialog,
+    //     onDismissRequest = { updateState.showDialog = false },
+    //     release = updateState.latestRelease,
+    //     onUpdateAndInstall = {
+    //         updateState.showDialog = false
+    //         coroutineScope.launch(Dispatchers.IO) {
+    //             updateState.downloadAndUpdate()
+    //         }
+    //     },
+    // )
 }
 
 @Composable
