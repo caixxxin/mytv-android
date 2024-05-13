@@ -7,6 +7,7 @@ import tv.danmaku.ijk.media.player.IMediaPlayer;
 import tv.danmaku.ijk.media.player.IjkMediaPlayer;
 import tv.danmaku.ijk.media.player.misc.ITrackInfo;
 import tv.danmaku.ijk.media.player.misc.IjkTrackInfo;
+import tv.danmaku.ijk.media.player.MediaInfo;
 
 import java.util.HashMap;
 
@@ -22,6 +23,7 @@ public class IjkUtil implements IMediaPlayer.OnPreparedListener,
     private static IjkUtil instance;
     private IjkMediaPlayer player;
     private IjkUtil() {
+        Log.i(TAG, "constructor.");
         player = new IjkMediaPlayer();
         player.setOnPreparedListener(this);
         player.setOnCompletionListener(this);
@@ -184,6 +186,7 @@ public class IjkUtil implements IMediaPlayer.OnPreparedListener,
      * ijkplayer方法
      */
     public void setDisplay(SurfaceHolder sh) {
+        Log.i(TAG, "setDisplay SurfaceHolder=" + sh);
         player.setDisplay(sh);
     }
 
@@ -242,11 +245,36 @@ public class IjkUtil implements IMediaPlayer.OnPreparedListener,
 
     public void reset() {
         Log.i(TAG, "reset");
+        if (player == null) {
+            Log.w(TAG, "reset unexpect case, need new player instance.");
+            player = new IjkMediaPlayer();
+            player.setOnPreparedListener(this);
+            player.setOnCompletionListener(this);
+            player.setOnBufferingUpdateListener(this);
+            player.setOnSeekCompleteListener(this);
+            player.setOnVideoSizeChangedListener(this);
+            player.setOnErrorListener(this);
+            player.setOnInfoListener(this);
+        }
         player.reset();
     }
 
     public boolean isPlaying() {
         return player.isPlaying();
+    }
+
+    public String getVideoCodec() {
+        MediaInfo media = player.getMediaInfo();
+        return media.mMeta.mVideoStream.mCodecName.toUpperCase();
+    }
+
+    public String getAudioCodec() {
+        MediaInfo media = player.getMediaInfo();
+        return media.mMeta.mAudioStream.mCodecName.toUpperCase();
+    }
+
+    public MediaInfo getMediaInfo() {
+        return player.getMediaInfo();
     }
 
     public void release() {
@@ -258,22 +286,14 @@ public class IjkUtil implements IMediaPlayer.OnPreparedListener,
         player.setOnVideoSizeChangedListener(null);
         player.setOnErrorListener(null);
         player.setOnInfoListener(null);
-        new Thread() {
-            @Override
-            public void run() {
-                try {
-                    player.release();
-                    player = null;
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }.start();
+        player.release();
+        player = null;
     }
 
     @Override
     public void onPrepared(IMediaPlayer mp) {
         synchronized (lockOnPreparedListener) {
+            Log.i(TAG, "onPrepared");
             for (OnPreparedListener listener : mOnPreparedListeners.values()) {
                 if (listener != null) {
                     listener.onPrepared();
@@ -286,6 +306,7 @@ public class IjkUtil implements IMediaPlayer.OnPreparedListener,
         start();
         if (!isVideo()) {
             synchronized (lockOnInfoListener) {
+                Log.i(TAG, "onInfo(prepared fail safe) MEDIA_INFO_VIDEO_RENDERING_START");
                 for (OnInfoListener listener : mOnInfoListeners.values()) {
                     if (listener != null) {
                         listener.onInfo(IMediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START, 0);
@@ -295,11 +316,37 @@ public class IjkUtil implements IMediaPlayer.OnPreparedListener,
                 }
             }
         }
+
+        // MediaInfo info = mp.getMediaInfo();
+        // Log.i(TAG, "mMediaPlayerName=" + info.mMediaPlayerName);
+        // Log.i(TAG, "mVideoDecoder=" + info.mVideoDecoder);
+        // Log.i(TAG, "mVideoDecoderImpl=" + info.mVideoDecoderImpl);
+        // Log.i(TAG, "mAudioDecoder=" + info.mAudioDecoder);
+        // Log.i(TAG, "mAudioDecoderImpl=" + info.mAudioDecoderImpl);
+        // Log.i(TAG, "mBitrate=" + info.mMeta.mBitrate);
+
+        // Log.i(TAG, "v mType=" + info.mMeta.mVideoStream.mType);
+        // Log.i(TAG, "v mLanguage=" + info.mMeta.mVideoStream.mLanguage);
+        // Log.i(TAG, "v mCodecName=" + info.mMeta.mVideoStream.mCodecName);
+        // Log.i(TAG, "v mCodecProfile=" + info.mMeta.mVideoStream.mCodecProfile);
+        // Log.i(TAG, "v mCodecLongName=" + info.mMeta.mVideoStream.mCodecLongName);
+        // Log.i(TAG, "v mBitrate=" + info.mMeta.mVideoStream.mBitrate);
+        // Log.i(TAG, "v mFpsNum=" + info.mMeta.mVideoStream.mFpsNum);
+
+        // Log.i(TAG, "a mType=" + info.mMeta.mAudioStream.mType);
+        // Log.i(TAG, "a mLanguage=" + info.mMeta.mAudioStream.mLanguage);
+        // Log.i(TAG, "a mCodecName=" + info.mMeta.mAudioStream.mCodecName);
+        // Log.i(TAG, "a mCodecProfile=" + info.mMeta.mAudioStream.mCodecProfile);
+        // Log.i(TAG, "a mCodecLongName=" + info.mMeta.mAudioStream.mCodecLongName);
+        // Log.i(TAG, "a mBitrate=" + info.mMeta.mAudioStream.mBitrate);
+        // Log.i(TAG, "a mSampleRate=" + info.mMeta.mAudioStream.mSampleRate);
+        // Log.i(TAG, "a mChannelLayout=" + info.mMeta.mAudioStream.mChannelLayout);
     }
 
     @Override
     public void onCompletion(IMediaPlayer mp) {
         synchronized (lockOnCompletionListener) {
+            Log.i(TAG, "onCompletion");
             for (OnCompletionListener listener : mOnCompletionListeners.values()) {
                 if (listener != null) {
                     listener.onCompletion();
@@ -313,6 +360,7 @@ public class IjkUtil implements IMediaPlayer.OnPreparedListener,
     @Override
     public void onBufferingUpdate(IMediaPlayer mp, int percent) {
         synchronized (lockOnBufferingUpdateListener) {
+            // Log.i(TAG, "onBufferingUpdate percent=" + percent);
             for (OnBufferingUpdateListener listener : mOnBufferingUpdateListeners.values()) {
                 if (listener != null) {
                     listener.onBufferingUpdate(percent);
@@ -326,6 +374,7 @@ public class IjkUtil implements IMediaPlayer.OnPreparedListener,
     @Override
     public void onSeekComplete(IMediaPlayer mp) {
         synchronized (lockOnSeekCompleteListener) {
+            Log.i(TAG, "onSeekComplete");
             for (OnSeekCompleteListener listener : mOnSeekCompleteListeners.values()) {
                 if (listener != null) {
                     listener.onSeekComplete();
@@ -338,10 +387,12 @@ public class IjkUtil implements IMediaPlayer.OnPreparedListener,
 
     @Override
     public void onVideoSizeChanged(IMediaPlayer mp, int width, int height, int sar_num, int sar_den) {
+        Log.i(TAG, "onVideoSizeChanged <- widht=" + width + " height=" + height + " sar_num=" + sar_num + " sar_den=" + sar_den);
         int videoWidth = mp.getVideoWidth();
         int videoHeight = mp.getVideoHeight();
         if (videoWidth != 0 && videoHeight != 0) {
             synchronized (lockOnVideoSizeChangedListener) {
+                Log.i(TAG, "onVideoSizeChanged -> widht=" + videoWidth + " height=" + videoHeight + " sar_num=" + sar_num + " sar_den=" + sar_den);
                 for (OnVideoSizeChangedListener listener : mOnVideoSizeChangedListeners.values()) {
                     if (listener != null) {
                         listener.onVideoSizeChanged(videoWidth, videoHeight, sar_num, sar_den);
@@ -356,6 +407,7 @@ public class IjkUtil implements IMediaPlayer.OnPreparedListener,
     @Override
     public boolean onError(IMediaPlayer mp, int what, int extra) {
         synchronized (lockOnErrorListener) {
+            Log.i(TAG, "onError what=" + what + " extra=" + extra);
             for (OnErrorListener listener : mOnErrorListeners.values()) {
                 if (listener != null) {
                     listener.onError(what, extra);
@@ -370,6 +422,7 @@ public class IjkUtil implements IMediaPlayer.OnPreparedListener,
     @Override
     public boolean onInfo(IMediaPlayer mp, int what, int extra) {
         synchronized (lockOnInfoListener) {
+            Log.i(TAG, "onInfo what=" + what + " extra=" + extra);
             for (OnInfoListener listener : mOnInfoListeners.values()) {
                 if (listener != null) {
                     listener.onInfo(what, extra);
@@ -383,6 +436,7 @@ public class IjkUtil implements IMediaPlayer.OnPreparedListener,
 
     private void notifyCommonError() {
         synchronized (lockOnErrorListener) {
+            Log.i(TAG, "notifyCommonError.");
             for (OnErrorListener listener : mOnErrorListeners.values()) {
                 if (listener != null) {
                     listener.onError(IMediaPlayer.MEDIA_ERROR_UNKNOWN, 100);
