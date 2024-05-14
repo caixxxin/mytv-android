@@ -86,13 +86,13 @@ fun PanelScreen(
             showProgrammeProgress = settingsState.uiShowEpgProgrammeProgress,
             playerState = playerState,
             onIptvFavoriteToggle = {
-                if (settingsState.iptvChannelFavoriteList.contains(it.channelName)) {
-                    settingsState.iptvChannelFavoriteList -= it.channelName
-                    ToastState.I.showToast("取消收藏: ${it.channelName}")
-                } else {
-                    settingsState.iptvChannelFavoriteList += it.channelName
-                    ToastState.I.showToast("已收藏: ${it.channelName}")
-                }
+                // if (settingsState.iptvChannelFavoriteList.contains(it.channelName)) {
+                //     settingsState.iptvChannelFavoriteList -= it.channelName
+                //     ToastState.I.showToast("取消收藏: ${it.channelName}")
+                // } else {
+                //     settingsState.iptvChannelFavoriteList += it.channelName
+                //     ToastState.I.showToast("已收藏: ${it.channelName}")
+                // }
             },
         )
     }
@@ -192,39 +192,39 @@ fun PanelBottom(
                     }
                 }
 
-                if (showFavoriteList) {
-                    PanelIptvFavoriteList(
-                        currentIptv = currentIptv,
-                        iptvList = IptvList(favoriteList),
-                        epgList = epgList,
-                        onIptvSelected = onIptvSelected,
-                        onIptvFavoriteToggle = {
-                            onIptvFavoriteToggle(it)
-                            key++
-                        },
-                        showProgrammeProgress = showProgrammeProgress,
-                        onClose = { onChangeShowFavoriteList(false) },
-                    )
-                } else {
+                // if (showFavoriteList) {
+                //     PanelIptvFavoriteList(
+                //         currentIptv = currentIptv,
+                //         iptvList = IptvList(favoriteList),
+                //         epgList = epgList,
+                //         onIptvSelected = onIptvSelected,
+                //         onIptvFavoriteToggle = {
+                //             // onIptvFavoriteToggle(it)
+                //             // key++
+                //         },
+                //         showProgrammeProgress = showProgrammeProgress,
+                //         onClose = { onChangeShowFavoriteList(false) },
+                //     )
+                // } else {
                     PanelIptvGroupList(
                         currentIptv = currentIptv,
                         iptvGroupList = iptvGroupList,
                         epgList = epgList,
                         onIptvSelected = onIptvSelected,
                         onIptvFavoriteToggle = {
-                            onIptvFavoriteToggle(it)
-                            key++
+                            // onIptvFavoriteToggle(it)
+                            // key++
                         },
                         showProgrammeProgress = showProgrammeProgress,
                         onChangeToFavoriteList = {
-                            if (favoriteList.isNotEmpty()) {
-                                onChangeShowFavoriteList(true)
-                            } else {
-                                ToastState.I.showToast("没有收藏的频道")
-                            }
+                            // if (favoriteList.isNotEmpty()) {
+                            //     onChangeShowFavoriteList(true)
+                            // } else {
+                            //     ToastState.I.showToast("没有收藏的频道")
+                            // }
                         },
                     )
-                }
+                // }
             }
         }
     }

@@ -135,14 +135,14 @@ fun ClassicPanelScreen(
                     epgList = epgList,
                     state = iptvListState,
                     onIptvFavoriteToggle = {
-                        if (settingsState.iptvChannelFavoriteList.contains(it.channelName)) {
-                            settingsState.iptvChannelFavoriteList -= it.channelName
-                            ToastState.I.showToast("取消收藏: ${it.channelName}")
-                        } else {
-                            settingsState.iptvChannelFavoriteList += it.channelName
-                            ToastState.I.showToast("已收藏: ${it.channelName}")
-                        }
-                        favoriteKey++
+                        // if (settingsState.iptvChannelFavoriteList.contains(it.channelName)) {
+                        //     settingsState.iptvChannelFavoriteList -= it.channelName
+                        //     ToastState.I.showToast("取消收藏: ${it.channelName}")
+                        // } else {
+                        //     settingsState.iptvChannelFavoriteList += it.channelName
+                        //     ToastState.I.showToast("已收藏: ${it.channelName}")
+                        // }
+                        // favoriteKey++
                     },
                     showProgrammeProgress = settingsState.uiShowEpgProgrammeProgress,
                 )

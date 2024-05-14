@@ -82,7 +82,8 @@ fun PanelIptvItem(
                 },
                 onLongSelect = {
                     focusRequester.requestFocus()
-                    onIptvFavoriteToggle()
+                    onIptvSelected()
+                    // onIptvFavoriteToggle()
                 },
                 onSettings = {
                     focusRequester.requestFocus()

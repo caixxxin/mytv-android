@@ -106,7 +106,8 @@ fun ClassicPanelIptvList(
                                     else focusRequester.requestFocus()
                                 },
                                 onLongSelect = {
-                                    if (isFocused) onIptvFavoriteToggle(iptv)
+                                    // if (isFocused) onIptvFavoriteToggle(iptv)
+                                    if (isFocused) onIptvSelected(iptv)
                                     else focusRequester.requestFocus()
                                 },
                             ),
