@@ -22,9 +22,12 @@ public class IjkUtil implements IMediaPlayer.OnPreparedListener,
     private String TAG = "IjkUtil";
     private static IjkUtil instance;
     private IjkMediaPlayer player;
+    private boolean hasSurface;
+
     private IjkUtil() {
         Log.i(TAG, "constructor.");
         player = new IjkMediaPlayer();
+        hasSurface = false;
         player.setOnPreparedListener(this);
         player.setOnCompletionListener(this);
         player.setOnBufferingUpdateListener(this);
@@ -186,7 +189,11 @@ public class IjkUtil implements IMediaPlayer.OnPreparedListener,
      * ijkplayer方法
      */
     public void setDisplay(SurfaceHolder sh) {
-        Log.i(TAG, "setDisplay SurfaceHolder=" + sh);
+        if (hasSurface) {
+            return;
+        }
+
+        Log.i(TAG, "setDisplay SurfaceHolder=" + sh + " isplaying=" + player.isPlaying());
         player.setDisplay(sh);
     }
 
@@ -256,6 +263,7 @@ public class IjkUtil implements IMediaPlayer.OnPreparedListener,
             player.setOnErrorListener(this);
             player.setOnInfoListener(this);
         }
+        hasSurface = false;
         player.reset();
     }
 
@@ -421,6 +429,9 @@ public class IjkUtil implements IMediaPlayer.OnPreparedListener,
 
     @Override
     public boolean onInfo(IMediaPlayer mp, int what, int extra) {
+        if (what == IMediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START) {
+            hasSurface = true;
+        }
         synchronized (lockOnInfoListener) {
             Log.i(TAG, "onInfo what=" + what + " extra=" + extra);
             for (OnInfoListener listener : mOnInfoListeners.values()) {
