@@ -6,6 +6,8 @@ import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -214,7 +216,7 @@ fun HomeContent(
         PanelDigitChannelSelectScreen(state = digitChannelSelectState)
 
         var showFavoriteList by remember { mutableStateOf(false) }
-        AnimatedVisibility(homeState.isPanelVisible, enter = fadeIn(), exit = fadeOut()) {
+        AnimatedVisibility(homeState.isPanelVisible, enter = EnterTransition.None, exit = ExitTransition.None) {
             if (settingsState.uiUseClassicPanelScreen) {
                 ClassicPanelScreen(
                     currentIptv = homeState.currentIptv,
@@ -242,7 +244,7 @@ fun HomeContent(
             }
         }
 
-        AnimatedVisibility(homeState.isSettingsVisible, enter = fadeIn(), exit = fadeOut()) {
+        AnimatedVisibility(homeState.isSettingsVisible, enter = EnterTransition.None, exit = ExitTransition.None) {
             SettingsScreen(
                 settingsState = settingsState,
                 updateState = updateState,

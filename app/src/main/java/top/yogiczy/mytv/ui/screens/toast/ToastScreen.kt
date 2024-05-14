@@ -4,6 +4,8 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -39,14 +41,8 @@ fun ToastScreen(
             AnimatedVisibility(
                 visible = state.visible,
                 // TODO * 1.2 暂时防止在手机上未完全隐藏
-                enter = slideInHorizontally(
-                    initialOffsetX = { -(it * 1.2).toInt() },
-                    animationSpec = tween(durationMillis = 300)
-                ),
-                exit = slideOutHorizontally(
-                    targetOffsetX = { -(it * 1.2).toInt() },
-                    animationSpec = tween(durationMillis = 300)
-                ),
+                enter = EnterTransition.None,
+                exit = ExitTransition.None,
             ) {
                 ToastItem(property = state.current)
             }
