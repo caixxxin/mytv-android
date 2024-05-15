@@ -190,6 +190,26 @@ public class IjkUtil implements IMediaPlayer.OnPreparedListener,
         player.setDisplay(sh);
     }
 
+    public void setCacheDisplay(SurfaceHolder sh) {
+        synchronized (lockCacheSurfaceHolder) {
+            Log.i(TAG, "setCacheDisplay SurfaceHolder=" + sh);
+            mCacheSurfaceHolder = sh;
+        }
+    }
+    public void useCacheDisplay() {
+        synchronized (lockCacheSurfaceHolder) {
+            Log.i(TAG, "useCacheDisplay SurfaceHolder=" + mCacheSurfaceHolder);
+            player.setDisplay(mCacheSurfaceHolder);
+        }
+    }
+    public boolean hasCacheSurfaceHolder() {
+        synchronized (lockCacheSurfaceHolder) {
+            return (mCacheSurfaceHolder != null);
+        }
+    }
+    private SurfaceHolder mCacheSurfaceHolder = null;
+    private Object lockCacheSurfaceHolder = new Object();
+
     public void setDataSource(String path) {
         try {
             Log.i(TAG, "setDataSource path=" + path);
@@ -206,6 +226,7 @@ public class IjkUtil implements IMediaPlayer.OnPreparedListener,
             player.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "dns_cache_clear", 1);
             player.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "dns_cache_timeout", 0);
             player.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec-all-videos", 1);
+            player.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "reconnect", 1);
             player.prepareAsync();
         } catch (IllegalStateException e) {
             Log.e(TAG, "prepareAsync exception=" + e);

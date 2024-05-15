@@ -35,7 +35,7 @@ fun VideoScreen(
                 SurfaceView(context)
             },
             update = { surfaceView ->
-                ijkUtilInst.setDisplay(surfaceView.holder)
+                ijkUtilInst.setCacheDisplay(surfaceView.holder)
             },
         )
 
