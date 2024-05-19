@@ -86,7 +86,7 @@ fun rememberPlayerState(
         }
 
         ijkUtilInst.setOnInfoListener("PlayerState") { what, extra ->
-            if (what == IMediaPlayer.MEDIA_INFO_BUFFERING_START) {
+            if (what == IMediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START) {
                 state.error = false
             }
         }
