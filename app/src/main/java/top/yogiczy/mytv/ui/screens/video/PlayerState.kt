@@ -76,9 +76,9 @@ fun rememberPlayerState(
         ijkUtilInst.setOnVideoSizeChangedListener("PlayerState") { width, height, sar_num, sar_den ->
             state.resolution = Pair(width, height)
 
-            if (width != 0 && height != 0) {
-                state.aspectRatio = width.toFloat() / height
-            }
+            // if (width != 0 && height != 0) {
+            //     state.aspectRatio = width.toFloat() / height
+            // }
         }
 
         ijkUtilInst.setOnErrorListener("PlayerState") { what, extra ->
@@ -86,7 +86,7 @@ fun rememberPlayerState(
         }
 
         ijkUtilInst.setOnInfoListener("PlayerState") { what, extra ->
-            if (what == IMediaPlayer.MEDIA_INFO_BUFFERING_START) {
+            if (what == IMediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START) {
                 state.error = false
             }
         }
