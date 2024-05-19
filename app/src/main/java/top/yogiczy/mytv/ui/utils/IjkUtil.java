@@ -227,6 +227,7 @@ public class IjkUtil implements IMediaPlayer.OnPreparedListener,
             player.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "dns_cache_timeout", 0);
             player.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec-all-videos", 1);
             player.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "reconnect", 1);
+            player.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "infbuf", 1);
             player.prepareAsync();
         } catch (IllegalStateException e) {
             Log.e(TAG, "prepareAsync exception=" + e);
