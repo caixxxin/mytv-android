@@ -8,6 +8,7 @@ cd /root/Android/Sdk/cmdline-tools/latest/bin
 ./sdkmanager --install platforms\;android-34
 ./sdkmanager --install build-tools\;34.0.0
 ./sdkmanager --install sources\;android-34
+./sdkmanager --install cmake\;3.22.1
 
 ###########################
 # 加载环境变量
@@ -19,6 +20,14 @@ export ANDROID_HOME=/root/Android/Sdk
 # build项目
 ###########################
 cd xxx
+
+echo "" >> gradle.properties
+echo "systemProp.http.proxyHost=192.168.3.40" >> gradle.properties
+echo "systemProp.http.proxyPort=7897" >> gradle.properties
+echo "systemProp.https.proxyHost=192.168.3.40" >> gradle.properties
+echo "systemProp.https.proxyPort=7897" >> gradle.properties
+
+
 ./gradlew assembleRelease
 
 ###########################
