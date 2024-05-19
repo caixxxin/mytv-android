@@ -327,10 +327,15 @@ class HomeContentState(
         })
 
     init {
-        if (settingsState.iptvLastIptvIdx in 0..<iptvGroupList.flatMap { it.iptvs }.size) {
-            changeCurrentIptv(iptvGroupList.flatMap { it.iptvs }[settingsState.iptvLastIptvIdx])
-        } else {
-            changeCurrentIptv(iptvGroupList.firstOrNull()?.iptvs?.firstOrNull() ?: Iptv.EMPTY)
+        coroutineScope.launch {
+            while(!IjkUtil.getInstance().hasCacheSurfaceHolder()) {
+                delay(300)
+            }
+            if (settingsState.iptvLastIptvIdx in 0..<iptvGroupList.flatMap { it.iptvs }.size) {
+                changeCurrentIptv(iptvGroupList.flatMap { it.iptvs }[settingsState.iptvLastIptvIdx])
+            } else {
+                changeCurrentIptv(iptvGroupList.firstOrNull()?.iptvs?.firstOrNull() ?: Iptv.EMPTY)
+            }
         }
 
         _ijkUtilInst.setOnPreparedListener("HomeContent") {
@@ -406,6 +411,7 @@ class HomeContentState(
 
         ijkUtilInst.reset()
         ijkUtilInst.setDataSource(url)
+        ijkUtilInst.useCacheDisplay()
         ijkUtilInst.prepareAsync()
     }
 
