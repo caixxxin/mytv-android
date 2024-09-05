@@ -29,245 +29,190 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import top.yogiczy.mytv.tv.ui.utils.Configs
 
+import tv.danmaku.ijk.media.player.IMediaPlayer
+import tv.danmaku.ijk.media.player.MediaInfo
+import tv.danmaku.ijk.media.player.IjkMediaMeta
+import top.yogiczy.mytv.tv.ui.utils.IjkUtil
+import android.util.Log
+
 @OptIn(UnstableApi::class)
 class Media3VideoPlayer(
     private val context: Context,
     private val coroutineScope: CoroutineScope,
 ) : VideoPlayer(coroutineScope) {
-    private val videoPlayer by lazy {
-        val renderersFactory = DefaultRenderersFactory(context)
-            .setExtensionRendererMode(EXTENSION_RENDERER_MODE_ON)
+    private val videoPlayer = IjkUtil.getInstance()
 
-        ExoPlayer
-            .Builder(context)
-            .setRenderersFactory(renderersFactory)
-            .build()
-            .apply { playWhenReady = true }
-    }
-    private val dataSourceFactory by lazy {
-        DefaultDataSource.Factory(
-            context,
-            DefaultHttpDataSource.Factory().apply {
-                setUserAgent(Configs.videoPlayerUserAgent)
-                setConnectTimeoutMs(Configs.videoPlayerLoadTimeout.toInt())
-                setReadTimeoutMs(Configs.videoPlayerLoadTimeout.toInt())
-                setKeepPostFor302Redirects(true)
-                setAllowCrossProtocolRedirects(true)
-            },
-        )
-    }
+    private val TAG = "Media3VideoPlayer"
 
-    private val contentTypeAttempts = mutableMapOf<Int, Boolean>()
-    private var updatePositionJob: Job? = null
-
-    private fun getMediaSource(uri: Uri, contentType: Int? = null): MediaSource? {
-        val mediaItem = MediaItem.fromUri(uri)
-
-        if (uri.toString().startsWith("rtp://")) {
-            return RtspMediaSource.Factory().createMediaSource(mediaItem)
+    private fun addIjkUtilListener() {
+        videoPlayer.setOnVideoSizeChangedListener("PlayerState") { width, height, sar_num, sar_den ->
+            triggerResolution(width, height)
+        }
+        videoPlayer.setOnErrorListener("PlayerState") { what, extra ->
+            triggerError(PlaybackException.UNSUPPORTED_TYPE)
+            true
         }
 
-        return when (val type = contentType ?: Util.inferContentType(uri)) {
-            C.CONTENT_TYPE_HLS -> {
-                HlsMediaSource.Factory(dataSourceFactory).createMediaSource(mediaItem)
-            }
-
-            C.CONTENT_TYPE_RTSP -> {
-                RtspMediaSource.Factory().createMediaSource(mediaItem)
-            }
-
-            C.CONTENT_TYPE_OTHER -> {
-                ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(mediaItem)
-            }
-
-            else -> {
-                triggerError(
-                    PlaybackException.UNSUPPORTED_TYPE.copy(
-                        errorCodeName = "${PlaybackException.UNSUPPORTED_TYPE.message}_$type"
-                    )
-                )
-                null
-            }
-        }
-    }
-
-    private fun prepare(uri: Uri, contentType: Int? = null) {
-        val mediaSource = getMediaSource(uri, contentType)
-
-        if (mediaSource != null) {
-            contentTypeAttempts[contentType ?: Util.inferContentType(uri)] = true
-            videoPlayer.setMediaSource(mediaSource)
-            videoPlayer.prepare()
-            videoPlayer.play()
-            triggerPrepared()
-        }
-        updatePositionJob?.cancel()
-        updatePositionJob = null
-    }
-
-    private val playerListener = object : Player.Listener {
-        override fun onVideoSizeChanged(videoSize: VideoSize) {
-            triggerResolution(videoSize.width, videoSize.height)
-        }
-
-        override fun onPlayerError(ex: androidx.media3.common.PlaybackException) {
-            when (ex.errorCode) {
-                // 如果是直播加载位置错误，尝试重新播放
-                androidx.media3.common.PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW -> {
-                    videoPlayer.seekToDefaultPosition()
-                    videoPlayer.prepare()
-                }
-
-                // 当解析容器不支持时，尝试使用其他解析容器
-                androidx.media3.common.PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED -> {
-                    videoPlayer.currentMediaItem?.localConfiguration?.uri?.let {
-                        if (contentTypeAttempts[C.CONTENT_TYPE_HLS] != true) {
-                            prepare(it, C.CONTENT_TYPE_HLS)
-                        } else if (contentTypeAttempts[C.CONTENT_TYPE_RTSP] != true) {
-                            prepare(it, C.CONTENT_TYPE_RTSP)
-                        } else if (contentTypeAttempts[C.CONTENT_TYPE_OTHER] != true) {
-                            prepare(it, C.CONTENT_TYPE_OTHER)
-                        } else {
-                            val type = Util.inferContentType(it)
-                            triggerError(
-                                PlaybackException.UNSUPPORTED_TYPE.copy(
-                                    errorCodeName = "${PlaybackException.UNSUPPORTED_TYPE.message}_$type"
-                                )
-                            )
-                        }
-                    }
-                }
-
-                else -> {
-                    triggerError(PlaybackException(ex.errorCodeName, ex.errorCode))
-                }
-            }
-        }
-
-        override fun onPlaybackStateChanged(playbackState: Int) {
-            if (playbackState == Player.STATE_BUFFERING) {
+        videoPlayer.setOnInfoListener("PlayerState") { what, extra ->
+            if (what == IMediaPlayer.MEDIA_INFO_FIND_STREAM_INFO) {
                 triggerError(null)
                 triggerBuffering(true)
-            } else if (playbackState == Player.STATE_READY) {
+            } else if (what == IMediaPlayer.MEDIA_INFO_COMPONENT_OPEN) {
                 triggerReady()
-
-                updatePositionJob?.cancel()
-                updatePositionJob = coroutineScope.launch {
-                    while (true) {
-                        val livePosition =
-                            System.currentTimeMillis() - videoPlayer.currentLiveOffset
-
-                        triggerCurrentPosition(if (livePosition > 0) livePosition else videoPlayer.currentPosition)
-                        delay(1000)
-                    }
-                }
-
-                triggerDuration(videoPlayer.duration)
+                triggerCurrentPosition(0)
+                triggerDuration(1)
+            } else if (what == IMediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START) {
+                triggerIsPlayingChanged(true)
             }
-
-            if (playbackState != Player.STATE_BUFFERING) {
+            if (what != IMediaPlayer.MEDIA_INFO_FIND_STREAM_INFO) {
                 triggerBuffering(false)
             }
+            true
         }
 
-        override fun onIsPlayingChanged(isPlaying: Boolean) {
-            triggerIsPlayingChanged(isPlaying)
+        videoPlayer.setOnPreparedListener("PlayerState") {
+            var info : MediaInfo = videoPlayer.getMediaInfo()
+            var TAG : String = "PlayerState"
+            // Log.i(TAG, "mMediaPlayerName=" + info.mMediaPlayerName);
+            // Log.i(TAG, "mVideoDecoder=" + info.mVideoDecoder);
+            // Log.i(TAG, "mVideoDecoderImpl=" + info.mVideoDecoderImpl);
+            // Log.i(TAG, "mAudioDecoder=" + info.mAudioDecoder);
+            // Log.i(TAG, "mAudioDecoderImpl=" + info.mAudioDecoderImpl);
+            // Log.i(TAG, "mBitrate=" + info.mMeta.mBitrate);
+
+            // Log.i(TAG, "v mType=" + info.mMeta.mVideoStream.mType);
+            // Log.i(TAG, "v mLanguage=" + info.mMeta.mVideoStream.mLanguage);
+            // Log.i(TAG, "v mCodecName=" + info.mMeta.mVideoStream.mCodecName);
+            // Log.i(TAG, "v mCodecProfile=" + info.mMeta.mVideoStream.mCodecProfile);
+            // Log.i(TAG, "v mCodecLongName=" + info.mMeta.mVideoStream.mCodecLongName);
+            // Log.i(TAG, "v mBitrate=" + info.mMeta.mVideoStream.mBitrate);
+            // Log.i(TAG, "v mFpsNum=" + info.mMeta.mVideoStream.mFpsNum);
+
+            // Log.i(TAG, "a mType=" + info.mMeta.mAudioStream.mType);
+            // Log.i(TAG, "a mLanguage=" + info.mMeta.mAudioStream.mLanguage);
+            // Log.i(TAG, "a mCodecName=" + info.mMeta.mAudioStream.mCodecName);
+            // Log.i(TAG, "a mCodecProfile=" + info.mMeta.mAudioStream.mCodecProfile);
+            // Log.i(TAG, "a mCodecLongName=" + info.mMeta.mAudioStream.mCodecLongName);
+            // Log.i(TAG, "a mBitrate=" + info.mMeta.mAudioStream.mBitrate);
+            // Log.i(TAG, "a mSampleRate=" + info.mMeta.mAudioStream.mSampleRate);
+            // Log.i(TAG, "a mChannelLayout=" + info.mMeta.mAudioStream.mChannelLayout);
+
+            var channelCount : Int = 2
+            when (info.mMeta.mAudioStream.mChannelLayout) {
+                IjkMediaMeta.AV_CH_LAYOUT_MONO -> channelCount = 1
+
+                IjkMediaMeta.AV_CH_LAYOUT_STEREO,
+                IjkMediaMeta.AV_CH_LAYOUT_2POINT1,
+                IjkMediaMeta.AV_CH_LAYOUT_STEREO_DOWNMIX -> channelCount = 2
+
+                IjkMediaMeta.AV_CH_LAYOUT_2_1,
+                IjkMediaMeta.AV_CH_LAYOUT_SURROUND,
+                IjkMediaMeta.AV_CH_LAYOUT_3POINT1 -> channelCount = 3
+
+                IjkMediaMeta.AV_CH_LAYOUT_4POINT0,
+                IjkMediaMeta.AV_CH_LAYOUT_4POINT1,
+                IjkMediaMeta.AV_CH_LAYOUT_2_2,
+                IjkMediaMeta.AV_CH_LAYOUT_QUAD -> channelCount = 4
+
+                IjkMediaMeta.AV_CH_LAYOUT_5POINT0,
+                IjkMediaMeta.AV_CH_LAYOUT_5POINT1,
+                IjkMediaMeta.AV_CH_LAYOUT_5POINT0_BACK,
+                IjkMediaMeta.AV_CH_LAYOUT_5POINT1_BACK -> channelCount = 5
+
+                IjkMediaMeta.AV_CH_LAYOUT_6POINT0,
+                IjkMediaMeta.AV_CH_LAYOUT_6POINT0_FRONT,
+                IjkMediaMeta.AV_CH_LAYOUT_HEXAGONAL,
+                IjkMediaMeta.AV_CH_LAYOUT_6POINT1,
+                IjkMediaMeta.AV_CH_LAYOUT_6POINT1_BACK,
+                IjkMediaMeta.AV_CH_LAYOUT_6POINT1_FRONT -> channelCount = 6
+
+                IjkMediaMeta.AV_CH_LAYOUT_7POINT0,
+                IjkMediaMeta.AV_CH_LAYOUT_7POINT0_FRONT,
+                IjkMediaMeta.AV_CH_LAYOUT_7POINT1,
+                IjkMediaMeta.AV_CH_LAYOUT_7POINT1_WIDE,
+                IjkMediaMeta.AV_CH_LAYOUT_7POINT1_WIDE_BACK -> channelCount = 7
+
+                IjkMediaMeta.AV_CH_LAYOUT_OCTAGONAL -> channelCount = 8
+            }
+
+            metadata = metadata.copy(
+                videoDecoder = info.mVideoDecoderImpl,
+                videoMimeType = info.mMeta.mVideoStream.mCodecName,
+                videoWidth = info.mMeta.mVideoStream.mWidth,
+                videoHeight = info.mMeta.mVideoStream.mHeight,
+                videoColor = "",
+                // TODO 帧率、比特率目前是从tag中获取，有的返回空，后续需要实时计算
+                videoFrameRate = info.mMeta.mVideoStream.mFpsNum.toFloat(),
+                videoBitrate = 0,
+                audioMimeType = info.mMeta.mAudioStream.mCodecName,
+                audioDecoder = info.mAudioDecoderImpl,
+                audioChannels = channelCount,
+                audioSampleRate = info.mMeta.mAudioStream.mSampleRate,
+            )
+            triggerMetadata(metadata)
         }
     }
 
-    private val metadataListener = object : AnalyticsListener {
-        override fun onVideoInputFormatChanged(
-            eventTime: AnalyticsListener.EventTime,
-            format: Format,
-            decoderReuseEvaluation: DecoderReuseEvaluation?,
-        ) {
-            metadata = metadata.copy(
-                videoMimeType = format.sampleMimeType ?: "",
-                videoWidth = format.width,
-                videoHeight = format.height,
-                videoColor = format.colorInfo?.toLogString() ?: "",
-                // TODO 帧率、比特率目前是从tag中获取，有的返回空，后续需要实时计算
-                videoFrameRate = format.frameRate,
-                videoBitrate = format.bitrate,
-            )
-            triggerMetadata(metadata)
-        }
-
-        override fun onVideoDecoderInitialized(
-            eventTime: AnalyticsListener.EventTime,
-            decoderName: String,
-            initializedTimestampMs: Long,
-            initializationDurationMs: Long,
-        ) {
-            metadata = metadata.copy(videoDecoder = decoderName)
-            triggerMetadata(metadata)
-        }
-
-        override fun onAudioInputFormatChanged(
-            eventTime: AnalyticsListener.EventTime,
-            format: Format,
-            decoderReuseEvaluation: DecoderReuseEvaluation?,
-        ) {
-            metadata = metadata.copy(
-                audioMimeType = format.sampleMimeType ?: "",
-                audioChannels = format.channelCount,
-                audioSampleRate = format.sampleRate,
-            )
-            triggerMetadata(metadata)
-        }
-
-        override fun onAudioDecoderInitialized(
-            eventTime: AnalyticsListener.EventTime,
-            decoderName: String,
-            initializedTimestampMs: Long,
-            initializationDurationMs: Long,
-        ) {
-            metadata = metadata.copy(audioDecoder = decoderName)
-            triggerMetadata(metadata)
-        }
+    private fun removeIjkUtilListener() {
+        videoPlayer.removeOnVideoSizeChangedListener("PlayerState")
+        videoPlayer.removeOnErrorListener("PlayerState")
+        videoPlayer.removeOnPreparedListener("PlayerState")
     }
 
     private val eventLogger = EventLogger()
 
     override fun initialize() {
+        Log.i(TAG, "initialize")
         super.initialize()
-        videoPlayer.addListener(playerListener)
-        videoPlayer.addAnalyticsListener(metadataListener)
-        videoPlayer.addAnalyticsListener(eventLogger)
+        // videoPlayer.addListener(playerListener)
+        // videoPlayer.addAnalyticsListener(metadataListener)
+        // videoPlayer.addAnalyticsListener(eventLogger)
+        addIjkUtilListener()
     }
 
     override fun release() {
-        videoPlayer.removeListener(playerListener)
-        videoPlayer.removeAnalyticsListener(metadataListener)
-        videoPlayer.removeAnalyticsListener(eventLogger)
+        Log.i(TAG, "release")
+        // videoPlayer.removeListener(playerListener)
+        // videoPlayer.removeAnalyticsListener(metadataListener)
+        // videoPlayer.removeAnalyticsListener(eventLogger)
+        removeIjkUtilListener()
         videoPlayer.release()
         super.release()
     }
 
     override fun prepare(url: String) {
-        contentTypeAttempts.clear()
-        prepare(Uri.parse(url))
+        Log.i(TAG, "prepare")
+        videoPlayer.stop()
+        videoPlayer.reset()
+        videoPlayer.setDataSource(url)
+        videoPlayer.useCacheDisplay()
+        videoPlayer.prepareAsync()
     }
 
     override fun play() {
-        videoPlayer.play()
+        Log.i(TAG, "play")
+        videoPlayer.start()
     }
 
     override fun pause() {
+        Log.i(TAG, "pause")
         videoPlayer.pause()
     }
 
     override fun seekTo(position: Long) {
-        videoPlayer.seekTo(position)
+        Log.i(TAG, "seekTo")
+        // videoPlayer.seekTo(position)
     }
 
     override fun stop() {
+        Log.i(TAG, "stop")
         videoPlayer.stop()
-        updatePositionJob?.cancel()
+        // updatePositionJob?.cancel()
         super.stop()
     }
 
     override fun setVideoSurfaceView(surfaceView: SurfaceView) {
-        videoPlayer.setVideoSurfaceView(surfaceView)
+        Log.i(TAG, "setVideoSurfaceView")
+        videoPlayer.setCacheDisplay(surfaceView.holder)
     }
 }
