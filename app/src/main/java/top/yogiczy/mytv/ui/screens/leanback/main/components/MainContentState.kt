@@ -21,6 +21,7 @@ import top.yogiczy.mytv.ui.screens.leanback.video.rememberLeanbackVideoPlayerSta
 import top.yogiczy.mytv.ui.utils.SP
 import top.yogiczy.mytv.utils.Loggable
 import kotlin.math.max
+import top.yogiczy.mytv.ui.utils.IjkUtil
 
 @Stable
 class LeanbackMainContentState(
@@ -63,9 +64,15 @@ class LeanbackMainContentState(
         }
 
     init {
-        changeCurrentIptv(iptvGroupList.iptvList.getOrElse(SP.iptvLastIptvIdx) {
-            iptvGroupList.firstOrNull()?.iptvList?.firstOrNull() ?: Iptv()
-        })
+        coroutineScope.launch {
+            while(!IjkUtil.getInstance().hasCacheSurfaceHolder()) {
+                delay(300)
+            }
+            delay(1500)
+            changeCurrentIptv(iptvGroupList.iptvList.getOrElse(SP.iptvLastIptvIdx) {
+                iptvGroupList.firstOrNull()?.iptvList?.firstOrNull() ?: Iptv()
+            })
+        }
 
         videoPlayerState.onReady {
             coroutineScope.launch {
