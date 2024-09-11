@@ -178,6 +178,7 @@ class LeanbackMedia3VideoPlayer(
     @UnstableApi
     override fun prepare(url: String) {
         Log.i(TAG, "prepare")
+        videoPlayer.stop()
         videoPlayer.reset()
         videoPlayer.setDataSource(url)
         videoPlayer.useCacheDisplay()
