@@ -182,6 +182,7 @@ class Media3VideoPlayer(
 
     override fun prepare(url: String) {
         Log.i(TAG, "prepare")
+        videoPlayer.stop()
         videoPlayer.reset()
         videoPlayer.setDataSource(url)
         videoPlayer.useCacheDisplay()
@@ -204,6 +205,7 @@ class Media3VideoPlayer(
     }
 
     override fun stop() {
+        Log.i(TAG, "stop")
         videoPlayer.stop()
         // updatePositionJob?.cancel()
         super.stop()
