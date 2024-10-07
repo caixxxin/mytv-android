@@ -6,6 +6,6 @@ rm -f sign.apk
 chmod +x gradlew
 ./gradlew assembleRelease
 
-/root/Android/Sdk/build-tools/34.0.0/apksigner sign --ks caixxxin.keystore --ks-pass pass:"12345678" --in tv/build/outputs/apk/release/mytv-android-tv-2.2.1-all-sdk21.apk --out sign.apk
+/root/Android/Sdk/build-tools/34.0.0/apksigner sign --ks caixxxin.keystore --ks-pass pass:"12345678" --in tv/build/outputs/apk/release/mytv-android-tv-2.2.3-all-sdk21.apk --out sign.apk
 
 rm -f sign.apk.idsig
