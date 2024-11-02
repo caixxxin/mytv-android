@@ -225,11 +225,12 @@ public class IjkUtil implements IMediaPlayer.OnPreparedListener,
             Log.i(TAG, "prepareAsync");
             player.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "dns_cache_clear", 1);
             player.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "dns_cache_timeout", 0);
+            player.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "user_agent", "qqlive");
             player.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec-all-videos", 1);
             player.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "reconnect", 1);
             player.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "infbuf", 1);
-            player.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "framedrop", 5);
-            player.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "max_cached_duration", 5000);
+            player.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "framedrop", 1);
+            player.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "max_cached_duration", 10000);
             player.prepareAsync();
         } catch (IllegalStateException e) {
             Log.e(TAG, "prepareAsync exception=" + e);

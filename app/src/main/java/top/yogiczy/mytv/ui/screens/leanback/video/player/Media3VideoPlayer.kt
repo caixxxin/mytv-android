@@ -93,7 +93,7 @@ class LeanbackMedia3VideoPlayer(
             // Log.i(TAG, "a mChannelLayout=" + info.mMeta.mAudioStream.mChannelLayout);
 
             var channelCount : Int = 2
-            when (info.mMeta.mAudioStream.mChannelLayout) {
+            when (info.mMeta.mAudioStream?.mChannelLayout) {
                 IjkMediaMeta.AV_CH_LAYOUT_MONO -> channelCount = 1
 
                 IjkMediaMeta.AV_CH_LAYOUT_STEREO,
@@ -130,19 +130,21 @@ class LeanbackMedia3VideoPlayer(
                 IjkMediaMeta.AV_CH_LAYOUT_OCTAGONAL -> channelCount = 8
             }
 
+            var videoFps : Int = 0
+            videoFps = info.mMeta.mVideoStream?.mFpsNum ?: 0
             metadata = metadata.copy(
-                videoDecoder = info.mVideoDecoderImpl,
-                videoMimeType = info.mMeta.mVideoStream.mCodecName,
-                videoWidth = info.mMeta.mVideoStream.mWidth,
-                videoHeight = info.mMeta.mVideoStream.mHeight,
+                videoDecoder = info?.mVideoDecoderImpl ?: "",
+                videoMimeType = info.mMeta.mVideoStream?.mCodecName ?: "",
+                videoWidth = info.mMeta.mVideoStream?.mWidth ?: 0,
+                videoHeight = info.mMeta.mVideoStream?.mHeight ?: 0,
                 videoColor = "",
                 // TODO 帧率、比特率目前是从tag中获取，有的返回空，后续需要实时计算
-                videoFrameRate = info.mMeta.mVideoStream.mFpsNum.toFloat(),
+                videoFrameRate = videoFps.toFloat(),
                 videoBitrate = 0,
-                audioMimeType = info.mMeta.mAudioStream.mCodecName,
-                audioDecoder = info.mAudioDecoderImpl,
+                audioMimeType = info.mMeta.mAudioStream?.mCodecName ?: "",
+                audioDecoder = info?.mAudioDecoderImpl ?: "",
                 audioChannels = channelCount,
-                audioSampleRate = info.mMeta.mAudioStream.mSampleRate,
+                audioSampleRate = info.mMeta.mAudioStream?.mSampleRate ?: 0,
             )
             triggerMetadata(metadata)
         }
