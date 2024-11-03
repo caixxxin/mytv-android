@@ -35,15 +35,15 @@ class LeanBackUpdateViewModel : ViewModel() {
         if (_isChecking) return
         if (_isUpdateAvailable) return
 
-        try {
-            _isChecking = true
-            _latestRelease = GitRepository().latestRelease(Constants.GIT_RELEASE_LATEST_URL)
-            _isUpdateAvailable = _latestRelease.version.compareVersion(currentVersion) > 0
-        } catch (e: Exception) {
-            log.e("检查更新失败", e)
-        } finally {
-            _isChecking = false
-        }
+        // try {
+        //     _isChecking = true
+        //     _latestRelease = GitRepository().latestRelease(Constants.GIT_RELEASE_LATEST_URL)
+        //     _isUpdateAvailable = _latestRelease.version.compareVersion(currentVersion) > 0
+        // } catch (e: Exception) {
+        //     log.e("检查更新失败", e)
+        // } finally {
+        //     _isChecking = false
+        // }
     }
 
     suspend fun downloadAndUpdate(latestFile: File) {
