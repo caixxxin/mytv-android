@@ -18,7 +18,7 @@ object Constants {
      * IPTV源地址
      */
     const val IPTV_SOURCE_URL =
-        "https://live.fanmingming.com/tv/m3u/ipv6.m3u"
+        "https://ghp.ci/https://raw.githubusercontent.com/fanmingming/live/main/tv/m3u/ipv6.m3u"
 
     /**
      * IPTV源缓存时间（毫秒）
@@ -59,7 +59,7 @@ object Constants {
     /**
      * 播放器 userAgent
      */
-    const val VIDEO_PLAYER_USER_AGENT = "ExoPlayer"
+    const val VIDEO_PLAYER_USER_AGENT = "qqlive"
 
     /**
      * 日志历史最大保留条数

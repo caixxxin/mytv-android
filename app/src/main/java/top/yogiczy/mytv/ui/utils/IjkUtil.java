@@ -22,9 +22,11 @@ public class IjkUtil implements IMediaPlayer.OnPreparedListener,
     private String TAG = "IjkUtil";
     private static IjkUtil instance;
     private IjkMediaPlayer player;
+    private String url;
     private IjkUtil() {
         Log.i(TAG, "constructor.");
         player = new IjkMediaPlayer();
+        url = "";
         player.setOnPreparedListener(this);
         player.setOnCompletionListener(this);
         player.setOnBufferingUpdateListener(this);
@@ -214,6 +216,7 @@ public class IjkUtil implements IMediaPlayer.OnPreparedListener,
         try {
             Log.i(TAG, "setDataSource path=" + path);
             player.setDataSource(path);
+            url = path;
         } catch (Exception e) {
             Log.e(TAG, "setDataSource exception=" + e);
             notifyCommonError();
@@ -229,8 +232,9 @@ public class IjkUtil implements IMediaPlayer.OnPreparedListener,
             player.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec-all-videos", 1);
             player.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "reconnect", 1);
             player.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "infbuf", 1);
-            player.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "framedrop", 1);
-            player.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "max_cached_duration", 10000);
+            player.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "framedrop", 1L);
+            player.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "max_cached_duration", 5000);
+            player.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "flush_packets", 1);
             player.prepareAsync();
         } catch (IllegalStateException e) {
             Log.e(TAG, "prepareAsync exception=" + e);
@@ -270,6 +274,7 @@ public class IjkUtil implements IMediaPlayer.OnPreparedListener,
 
     public void reset() {
         Log.i(TAG, "reset");
+        url = "";
         if (player == null) {
             Log.w(TAG, "reset unexpect case, need new player instance.");
             player = new IjkMediaPlayer();
@@ -288,6 +293,10 @@ public class IjkUtil implements IMediaPlayer.OnPreparedListener,
         return player.isPlaying();
     }
 
+    public String getUrl() {
+        return url;
+    }
+
     public String getVideoCodec() {
         MediaInfo media = player.getMediaInfo();
         return media.mMeta.mVideoStream.mCodecName.toUpperCase();
@@ -300,6 +309,11 @@ public class IjkUtil implements IMediaPlayer.OnPreparedListener,
 
     public MediaInfo getMediaInfo() {
         return player.getMediaInfo();
+    }
+
+    public long currentPosition() {
+        Log.i(TAG, "currentPosition=" + player.getCurrentPosition());
+        return player.getCurrentPosition();
     }
 
     public void release() {
@@ -443,6 +457,39 @@ public class IjkUtil implements IMediaPlayer.OnPreparedListener,
         }
         return true;
     }
+
+    // int MEDIA_INFO_UNKNOWN = 1;
+    // int MEDIA_INFO_STARTED_AS_NEXT = 2;
+    // int MEDIA_INFO_VIDEO_RENDERING_START = 3;
+    // int MEDIA_INFO_VIDEO_TRACK_LAGGING = 700;
+    // int MEDIA_INFO_BUFFERING_START = 701;
+    // int MEDIA_INFO_BUFFERING_END = 702;
+    // int MEDIA_INFO_NETWORK_BANDWIDTH = 703;
+    // int MEDIA_INFO_BAD_INTERLEAVING = 800;
+    // int MEDIA_INFO_NOT_SEEKABLE = 801;
+    // int MEDIA_INFO_METADATA_UPDATE = 802;
+    // int MEDIA_INFO_TIMED_TEXT_ERROR = 900;
+    // int MEDIA_INFO_UNSUPPORTED_SUBTITLE = 901;
+    // int MEDIA_INFO_SUBTITLE_TIMED_OUT = 902;
+
+    // int MEDIA_INFO_VIDEO_ROTATION_CHANGED = 10001;
+    // int MEDIA_INFO_AUDIO_RENDERING_START  = 10002;
+    // int MEDIA_INFO_AUDIO_DECODED_START    = 10003;
+    // int MEDIA_INFO_VIDEO_DECODED_START    = 10004;
+    // int MEDIA_INFO_OPEN_INPUT             = 10005;
+    // int MEDIA_INFO_FIND_STREAM_INFO       = 10006;
+    // int MEDIA_INFO_COMPONENT_OPEN         = 10007;
+    // int MEDIA_INFO_VIDEO_SEEK_RENDERING_START = 10008;
+    // int MEDIA_INFO_AUDIO_SEEK_RENDERING_START = 10009;
+    // int MEDIA_INFO_MEDIA_ACCURATE_SEEK_COMPLETE = 10100;
+
+    // int MEDIA_ERROR_UNKNOWN = 1;
+    // int MEDIA_ERROR_SERVER_DIED = 100;
+    // int MEDIA_ERROR_NOT_VALID_FOR_PROGRESSIVE_PLAYBACK = 200;
+    // int MEDIA_ERROR_IO = -1004;
+    // int MEDIA_ERROR_MALFORMED = -1007;
+    // int MEDIA_ERROR_UNSUPPORTED = -1010;
+    // int MEDIA_ERROR_TIMED_OUT = -110;
 
     @Override
     public boolean onInfo(IMediaPlayer mp, int what, int extra) {

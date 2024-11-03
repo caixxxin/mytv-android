@@ -43,6 +43,7 @@ class LeanbackMedia3VideoPlayer(
     private val videoPlayer = IjkUtil.getInstance()
 
     private val TAG = "Media3VideoPlayer"
+    private var updatePositionJob: Job? = null
 
     private fun addIjkUtilListener() {
         videoPlayer.setOnVideoSizeChangedListener("PlayerState") { width, height, sar_num, sar_den ->
@@ -53,15 +54,20 @@ class LeanbackMedia3VideoPlayer(
             true
         }
         videoPlayer.setOnInfoListener("PlayerState") { what, extra ->
-            if (what == IMediaPlayer.MEDIA_INFO_FIND_STREAM_INFO) {
+            if (what == IMediaPlayer.MEDIA_INFO_OPEN_INPUT) {
                 triggerError(null)
                 triggerBuffering(true)
-            } else if (what == IMediaPlayer.MEDIA_INFO_COMPONENT_OPEN) {
-                triggerReady()
-                triggerCurrentPosition(0)
-            }
-            if (what != IMediaPlayer.MEDIA_INFO_FIND_STREAM_INFO) {
+            } else if (what == IMediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START) {
                 triggerBuffering(false)
+                triggerReady()
+                updatePositionJob?.cancel()
+                updatePositionJob = coroutineScope.launch {
+                    triggerCurrentPosition(-1)
+                    while (true) {
+                        triggerCurrentPosition(videoPlayer.currentPosition())
+                        delay(1000)
+                    }
+                }
             }
             true
         }
@@ -172,6 +178,7 @@ class LeanbackMedia3VideoPlayer(
         // videoPlayer.removeListener(playerListener)
         // videoPlayer.removeAnalyticsListener(metadataListener)
         // videoPlayer.removeAnalyticsListener(eventLogger)
+        updatePositionJob?.cancel()
         removeIjkUtilListener()
         videoPlayer.release()
         super.release()
@@ -180,6 +187,10 @@ class LeanbackMedia3VideoPlayer(
     @UnstableApi
     override fun prepare(url: String) {
         Log.i(TAG, "prepare")
+        if (videoPlayer.isPlaying() && videoPlayer.getUrl() == url) {
+            return;
+        }
+        updatePositionJob?.cancel()
         videoPlayer.stop()
         videoPlayer.reset()
         videoPlayer.setDataSource(url)
