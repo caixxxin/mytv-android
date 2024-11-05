@@ -32,6 +32,8 @@ import java.util.Locale
 import kotlin.math.max
 import kotlin.math.min
 
+import top.yogiczy.mytv.tv.ui.utils.IjkUtil
+
 @Stable
 class MainContentState(
     private val coroutineScope: CoroutineScope,
@@ -105,11 +107,17 @@ class MainContentState(
         }
 
     init {
-        val channelGroupList = channelGroupListProvider()
+        coroutineScope.launch {
+            while(!IjkUtil.getInstance().hasCacheSurfaceHolder()) {
+                delay(300)
+            }
+            delay(1500)
+            val channelGroupList = channelGroupListProvider()
 
-        changeCurrentChannel(channelGroupList.channelList.getOrElse(settingsViewModel.iptvLastChannelIdx) {
-            channelGroupList.channelList.firstOrNull() ?: Channel()
-        })
+            changeCurrentChannel(channelGroupList.channelList.getOrElse(settingsViewModel.iptvLastChannelIdx) {
+                channelGroupList.channelList.firstOrNull() ?: Channel()
+            })
+        }
 
         videoPlayerState.onReady {
             settingsViewModel.iptvPlayableHostList += getUrlHost(_currentChannel.urlList[_currentChannelUrlIdx])

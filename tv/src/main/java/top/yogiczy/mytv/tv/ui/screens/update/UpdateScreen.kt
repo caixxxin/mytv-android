@@ -41,22 +41,22 @@ fun UpdateScreen(
     val latestFile = remember { File(Globals.cacheDir, "latest.apk") }
 
     LaunchedEffect(Unit) {
-        delay(3000)
-        updateViewModel.checkUpdate(packageInfo.versionName, settingsViewModel.updateChannel)
+        // delay(3000)
+        // updateViewModel.checkUpdate(packageInfo.versionName, settingsViewModel.updateChannel)
 
-        val latestRelease = updateViewModel.latestRelease
-        if (
-            updateViewModel.isUpdateAvailable &&
-            latestRelease.version != settingsViewModel.appLastLatestVersion
-        ) {
-            settingsViewModel.appLastLatestVersion = latestRelease.version
+        // val latestRelease = updateViewModel.latestRelease
+        // if (
+        //     updateViewModel.isUpdateAvailable &&
+        //     latestRelease.version != settingsViewModel.appLastLatestVersion
+        // ) {
+        //     settingsViewModel.appLastLatestVersion = latestRelease.version
 
-            if (settingsViewModel.updateForceRemind) {
-                updateViewModel.visible = true
-            } else {
-                Snackbar.show("发现新版本: v${latestRelease.version}")
-            }
-        }
+        //     if (settingsViewModel.updateForceRemind) {
+        //         updateViewModel.visible = true
+        //     } else {
+        //         Snackbar.show("发现新版本: v${latestRelease.version}")
+        //     }
+        // }
     }
 
     val launcher =
