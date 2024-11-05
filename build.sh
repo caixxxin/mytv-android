@@ -9,3 +9,4 @@ chmod +x gradlew
 /root/Android/Sdk/build-tools/34.0.0/apksigner sign --ks caixxxin.keystore --ks-pass pass:"12345678" --in app/build/outputs/apk/release/app-release-unsigned.apk --out sign.apk
 
 rm -f sign.apk.idsig
+mv sign.apk mytv-android-v1.4.4-exo.apk

@@ -36,22 +36,22 @@ fun LeanbackUpdateScreen(
     val latestFile = remember { File(AppGlobal.cacheDir, "latest.apk") }
 
     LaunchedEffect(Unit) {
-        delay(3000)
-        updateViewModel.checkUpdate(packageInfo.versionName)
+        // delay(3000)
+        // updateViewModel.checkUpdate(packageInfo.versionName)
 
-        val latestRelease = updateViewModel.latestRelease
-        if (
-            updateViewModel.isUpdateAvailable &&
-            latestRelease.version != settingsViewModel.appLastLatestVersion
-        ) {
-            settingsViewModel.appLastLatestVersion = latestRelease.version
+        // val latestRelease = updateViewModel.latestRelease
+        // if (
+        //     updateViewModel.isUpdateAvailable &&
+        //     latestRelease.version != settingsViewModel.appLastLatestVersion
+        // ) {
+        //     settingsViewModel.appLastLatestVersion = latestRelease.version
 
-            if (settingsViewModel.updateForceRemind) {
-                updateViewModel.showDialog = true
-            } else {
-                LeanbackToastState.I.showToast("新版本: v${latestRelease.version}")
-            }
-        }
+        //     if (settingsViewModel.updateForceRemind) {
+        //         updateViewModel.showDialog = true
+        //     } else {
+        //         LeanbackToastState.I.showToast("新版本: v${latestRelease.version}")
+        //     }
+        // }
     }
 
     val launcher =
