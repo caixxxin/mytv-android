@@ -36,19 +36,19 @@ class UpdateViewModel : ViewModel() {
         if (_isChecking) return
         if (_isUpdateAvailable) return
 
-        try {
-            val releaseUrl = Constants.GIT_RELEASE_LATEST_URL[channel] ?: return
+        // try {
+        //     val releaseUrl = Constants.GIT_RELEASE_LATEST_URL[channel] ?: return
 
-            _isChecking = true
-            _latestRelease = GitRepository().latestRelease(releaseUrl)
-            log.d("线上版本: ${_latestRelease.version}")
-            _isUpdateAvailable = _latestRelease.version.compareVersion(currentVersion) > 0
-        } catch (ex: Exception) {
-            log.e("检查更新失败", ex)
-            _latestRelease = _latestRelease.copy(description = ex.message ?: "检查更新失败")
-        } finally {
-            _isChecking = false
-        }
+        //     _isChecking = true
+        //     _latestRelease = GitRepository().latestRelease(releaseUrl)
+        //     log.d("线上版本: ${_latestRelease.version}")
+        //     _isUpdateAvailable = _latestRelease.version.compareVersion(currentVersion) > 0
+        // } catch (ex: Exception) {
+        //     log.e("检查更新失败", ex)
+        //     _latestRelease = _latestRelease.copy(description = ex.message ?: "检查更新失败")
+        // } finally {
+        //     _isChecking = false
+        // }
     }
 
     suspend fun downloadAndUpdate(latestFile: File) {
