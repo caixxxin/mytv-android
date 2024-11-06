@@ -9,3 +9,4 @@ chmod +x gradlew
 /root/Android/Sdk/build-tools/34.0.0/apksigner sign --ks caixxxin.keystore --ks-pass pass:"12345678" --in tv/build/outputs/apk/release/mytv-android-tv-2.2.5-all-sdk21.apk --out sign.apk
 
 rm -f sign.apk.idsig
+mv sign.apk mytv-android-tv-2.2.5-ijk.apk

@@ -43,6 +43,7 @@ class Media3VideoPlayer(
     private val videoPlayer = IjkUtil.getInstance()
 
     private val TAG = "Media3VideoPlayer"
+    private var updatePositionJob: Job? = null
 
     private fun addIjkUtilListener() {
         videoPlayer.setOnVideoSizeChangedListener("PlayerState") { width, height, sar_num, sar_den ->
@@ -54,18 +55,25 @@ class Media3VideoPlayer(
         }
 
         videoPlayer.setOnInfoListener("PlayerState") { what, extra ->
-            if (what == IMediaPlayer.MEDIA_INFO_FIND_STREAM_INFO) {
+            if (what == IMediaPlayer.MEDIA_INFO_OPEN_INPUT) {
                 triggerError(null)
                 triggerBuffering(true)
-            } else if (what == IMediaPlayer.MEDIA_INFO_COMPONENT_OPEN) {
-                triggerReady()
-                triggerCurrentPosition(0)
-                triggerDuration(1)
             } else if (what == IMediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START) {
-                triggerIsPlayingChanged(true)
-            }
-            if (what != IMediaPlayer.MEDIA_INFO_FIND_STREAM_INFO) {
                 triggerBuffering(false)
+                triggerReady()
+                triggerIsPlayingChanged(true)
+                updatePositionJob?.cancel()
+                updatePositionJob = coroutineScope.launch {
+                    while (true) {
+                        val livePosition =
+                            System.currentTimeMillis()
+
+                        triggerCurrentPosition(if (livePosition > 0) livePosition else videoPlayer.currentPosition())
+                        delay(1000)
+                    }
+                }
+
+                triggerDuration(videoPlayer.getDuration())
             }
             true
         }
@@ -98,7 +106,7 @@ class Media3VideoPlayer(
             // Log.i(TAG, "a mChannelLayout=" + info.mMeta.mAudioStream.mChannelLayout);
 
             var channelCount : Int = 2
-            when (info.mMeta.mAudioStream.mChannelLayout) {
+            when (info.mMeta.mAudioStream?.mChannelLayout) {
                 IjkMediaMeta.AV_CH_LAYOUT_MONO -> channelCount = 1
 
                 IjkMediaMeta.AV_CH_LAYOUT_STEREO,
@@ -135,19 +143,21 @@ class Media3VideoPlayer(
                 IjkMediaMeta.AV_CH_LAYOUT_OCTAGONAL -> channelCount = 8
             }
 
+            var videoFps : Int = 0
+            videoFps = info.mMeta.mVideoStream?.mFpsNum ?: 0
             metadata = metadata.copy(
-                videoDecoder = info.mVideoDecoderImpl,
-                videoMimeType = info.mMeta.mVideoStream.mCodecName,
-                videoWidth = info.mMeta.mVideoStream.mWidth,
-                videoHeight = info.mMeta.mVideoStream.mHeight,
+                videoDecoder = info?.mVideoDecoderImpl ?: "",
+                videoMimeType = info.mMeta.mVideoStream?.mCodecName ?: "",
+                videoWidth = info.mMeta.mVideoStream?.mWidth ?: 0,
+                videoHeight = info.mMeta.mVideoStream?.mHeight ?: 0,
                 videoColor = "",
                 // TODO 帧率、比特率目前是从tag中获取，有的返回空，后续需要实时计算
-                videoFrameRate = info.mMeta.mVideoStream.mFpsNum.toFloat(),
+                videoFrameRate = videoFps.toFloat(),
                 videoBitrate = 0,
-                audioMimeType = info.mMeta.mAudioStream.mCodecName,
-                audioDecoder = info.mAudioDecoderImpl,
+                audioMimeType = info.mMeta.mAudioStream?.mCodecName ?: "",
+                audioDecoder = info?.mAudioDecoderImpl ?: "",
                 audioChannels = channelCount,
-                audioSampleRate = info.mMeta.mAudioStream.mSampleRate,
+                audioSampleRate = info.mMeta.mAudioStream?.mSampleRate ?: 0,
             )
             triggerMetadata(metadata)
         }
@@ -175,6 +185,7 @@ class Media3VideoPlayer(
         // videoPlayer.removeListener(playerListener)
         // videoPlayer.removeAnalyticsListener(metadataListener)
         // videoPlayer.removeAnalyticsListener(eventLogger)
+        updatePositionJob?.cancel()
         removeIjkUtilListener()
         videoPlayer.release()
         super.release()
@@ -182,11 +193,13 @@ class Media3VideoPlayer(
 
     override fun prepare(url: String) {
         Log.i(TAG, "prepare")
+        if (videoPlayer.isPlaying() && videoPlayer.getUrl() == url) {
+            return;
+        }
+        updatePositionJob?.cancel()
         videoPlayer.stop()
         videoPlayer.reset()
-        videoPlayer.setDataSource(url.let {
-            if (url.endsWith("?")) "${it}t" else it
-        })
+        videoPlayer.setDataSource(url)
         videoPlayer.useCacheDisplay()
         videoPlayer.prepareAsync()
     }
@@ -209,7 +222,7 @@ class Media3VideoPlayer(
     override fun stop() {
         Log.i(TAG, "stop")
         videoPlayer.stop()
-        // updatePositionJob?.cancel()
+        updatePositionJob?.cancel()
         super.stop()
     }
 
