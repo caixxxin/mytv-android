@@ -233,7 +233,7 @@ public class IjkUtil implements IMediaPlayer.OnPreparedListener,
             player.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "reconnect", 1);
             player.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "infbuf", 1);
             player.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "framedrop", 1L);
-            player.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "max_cached_duration", 5000);
+            player.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "max_cached_duration", 15000);
             player.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "flush_packets", 1);
             player.prepareAsync();
         } catch (IllegalStateException e) {
@@ -314,6 +314,11 @@ public class IjkUtil implements IMediaPlayer.OnPreparedListener,
     public long currentPosition() {
         Log.i(TAG, "currentPosition=" + player.getCurrentPosition());
         return player.getCurrentPosition();
+    }
+
+    public long getDuration() {
+        Log.i(TAG, "getDuration=" + player.getDuration());
+        return player.getDuration();
     }
 
     public void release() {
