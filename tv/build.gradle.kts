@@ -19,7 +19,7 @@ android {
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = 2
-        versionName = "2.2.5"
+        versionName = "2.2.7"
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -87,9 +87,16 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
 
     // 播放器
-    implementation(libs.androidx.media3.exoplayer)
-    implementation(libs.androidx.media3.exoplayer.hls)
-    implementation(libs.androidx.media3.exoplayer.rtsp)
+    val mediaSettingsFile = file("../../media/core_settings.gradle")
+    if (mediaSettingsFile.exists()) {
+        implementation(project(":media3:lib-exoplayer"))
+        implementation(project(":media3:lib-exoplayer-hls"))
+        implementation(project(":media3:lib-exoplayer-rtsp"))
+    } else {
+        implementation(libs.androidx.media3.exoplayer)
+        implementation(libs.androidx.media3.exoplayer.hls)
+        implementation(libs.androidx.media3.exoplayer.rtsp)
+    }
 
     // 二维码
     implementation(libs.qrose)
