@@ -31,13 +31,13 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = false
+            isShrinkResources = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            signingConfig = signingConfigs.getByName("release")
+            // signingConfig = signingConfigs.getByName("release")
         }
     }
 
@@ -87,16 +87,9 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
 
     // 播放器
-    val mediaSettingsFile = file("../../media/core_settings.gradle")
-    if (mediaSettingsFile.exists()) {
-        implementation(project(":media3:lib-exoplayer"))
-        implementation(project(":media3:lib-exoplayer-hls"))
-        implementation(project(":media3:lib-exoplayer-rtsp"))
-    } else {
-        implementation(libs.androidx.media3.exoplayer)
-        implementation(libs.androidx.media3.exoplayer.hls)
-        implementation(libs.androidx.media3.exoplayer.rtsp)
-    }
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.exoplayer.hls)
+    implementation(libs.androidx.media3.exoplayer.rtsp)
 
     // 二维码
     implementation(libs.qrose)

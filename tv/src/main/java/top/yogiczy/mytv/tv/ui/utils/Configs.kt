@@ -145,9 +145,6 @@ object Configs {
 
         /** 播放器 停止上一媒体项 */
         VIDEO_PLAYER_STOP_PREVIOUS_MEDIA_ITEM,
-
-        /** 播放器 跳过同一VSync渲染多帧 */
-        VIDEO_PLAYER_SKIP_MULTIPLE_FRAMES_ON_SAME_VSYNC,
     }
 
     /** ==================== 应用 ==================== */
@@ -382,11 +379,6 @@ object Configs {
     var videoPlayerStopPreviousMediaItem: Boolean
         get() = SP.getBoolean(KEY.VIDEO_PLAYER_STOP_PREVIOUS_MEDIA_ITEM.name, true)
         set(value) = SP.putBoolean(KEY.VIDEO_PLAYER_STOP_PREVIOUS_MEDIA_ITEM.name, value)
-
-    /** 播放器 跳过同一VSync渲染多帧 */
-    var videoPlayerSkipMultipleFramesOnSameVSync: Boolean
-        get() = SP.getBoolean(KEY.VIDEO_PLAYER_SKIP_MULTIPLE_FRAMES_ON_SAME_VSYNC.name, false)
-        set(value) = SP.putBoolean(KEY.VIDEO_PLAYER_SKIP_MULTIPLE_FRAMES_ON_SAME_VSYNC.name, value)
 
     enum class UiTimeShowMode(val value: Int) {
         /** 隐藏 */

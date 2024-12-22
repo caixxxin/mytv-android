@@ -26,7 +26,7 @@ object Constants {
         listOf(
             IptvSource(
                 name = "默认直播源 fanmingming（IPV6）",
-                url = "https://live.fanmingming.com/tv/m3u/ipv6.m3u",
+                url = "https://live.fanmingming.cn/tv/m3u/ipv6.m3u",
             ),
             IptvSource(
                 name = "默认直播源 yuanzl77（IPV4/IPV6）",
@@ -87,7 +87,7 @@ object Constants {
     /**
      * 播放器 userAgent
      */
-    const val VIDEO_PLAYER_USER_AGENT = "ExoPlayer"
+    const val VIDEO_PLAYER_USER_AGENT = "qqlive"
 
     /**
      * 播放器加载超时

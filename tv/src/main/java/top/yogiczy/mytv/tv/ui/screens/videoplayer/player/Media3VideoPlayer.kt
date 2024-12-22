@@ -23,7 +23,6 @@ import androidx.media3.exoplayer.rtsp.RtspMediaSource
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.util.EventLogger
-import androidx.media3.exoplayer.video.MediaCodecVideoRenderer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -66,9 +65,6 @@ class Media3VideoPlayer(
                 else DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON
             )
 
-
-        MediaCodecVideoRenderer.skipMultipleFramesOnSameVsync =
-            Configs.videoPlayerSkipMultipleFramesOnSameVSync
         return ExoPlayer
             .Builder(context)
             .setRenderersFactory(renderersFactory)

@@ -67,19 +67,6 @@ fun SettingsCategoryVideoPlayer(
         }
 
         item {
-            SettingsListItem(
-                headlineContent = "跳过多帧渲染",
-                trailingContent = {
-                    Switch(settingsViewModel.videoPlayerSkipMultipleFramesOnSameVSync, null)
-                },
-                onSelected = {
-                    settingsViewModel.videoPlayerSkipMultipleFramesOnSameVSync =
-                        !settingsViewModel.videoPlayerSkipMultipleFramesOnSameVSync
-                },
-            )
-        }
-
-        item {
             val popupManager = LocalPopupManager.current
             var visible by remember { mutableStateOf(false) }
 
